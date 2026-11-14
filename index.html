@@ -1016,7 +1016,7 @@ a.btn { text-decoration: none; display: inline-block; }
     var n = { overdue: 0, today: 0, week: 0, later: 0 }, doneCount = 0;
     var all = S.admin ? adminTasks() : staffTasks();
     if (!S.admin) noteSeen(all);
-    var newCount = all.filter(isNew).length;
+    var newCount = S.allowed ? all.filter(isNew).length : 0;
     $("#today-line").textContent = t("todayIs", { d: new Date().toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long" }) }) + (newCount ? " " + t("newCount", { n: newCount }) : "");
     all.forEach(function (k) { if (isDone(k)) doneCount++; else n[bucket(k)]++; });
     if (S.loaded) {
