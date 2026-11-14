@@ -30,7 +30,7 @@
   --navy: #0a4478;
   --navy-2: #0d5a9c;
   --navy-fg: #ffffff;
-  --accent: #14915a;
+  --accent: #128553;
   --accent-deep: #0e7446;
   --accent-fg: #ffffff;
   --accent-soft: #e3f6ec;
@@ -165,7 +165,7 @@ html[lang="ar"] .top-text h1 { letter-spacing: 0; line-height: 1.5; }
 .task .title { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
 .task .title bdi { transition: color 0.3s; }
 .task.is-done .title bdi { color: var(--muted); text-decoration: line-through; }
-.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); vertical-align: 2px; margin-inline-start: 6px; }
+.tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); vertical-align: 2px; margin-inline-start: 6px; }
 .task.late { background: var(--danger-soft); box-shadow: inset 0 0 0 1.5px var(--danger), var(--shadow); }
 .task.late:hover { box-shadow: inset 0 0 0 1.5px var(--danger), var(--shadow-lift); }
 .task.late .title, .task.late .due span { color: var(--danger); }
@@ -269,6 +269,17 @@ a.btn { text-decoration: none; display: inline-block; }
   .due { grid-column: 2; grid-row: 1; flex-direction: row; align-items: center; justify-content: flex-start; white-space: normal; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
   .task .body { grid-column: 2; }
   .tabs button { padding: 7px 14px; }
+}
+/* touch screens: every control at least 44px tall, and no tap delay */
+button, a, input, summary, select { touch-action: manipulation; }
+@media (pointer: coarse) {
+  .btn.small, .chip, .tabs button, .link-btn { min-height: 44px; }
+  a.btn, .link-btn { display: inline-flex; align-items: center; }
+  .btn.small { padding-inline: 16px; }
+  .task .actions { gap: 8px; }
+  .who summary { padding: 12px 0; }
+  .task .check { padding: 10px; margin: -10px; cursor: pointer; }
+  .task .check input { width: 28px; height: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -943,7 +954,8 @@ a.btn { text-decoration: none; display: inline-block; }
       var cb = h("input", { type: "checkbox", id: "done-" + k.id, "aria-label": t("markDone", { t: k.title || "" }) });
       cb.checked = done;
       cb.addEventListener("change", function () { toggleDone(k.id, cb.checked, li); });
-      li.appendChild(h("div", { class: "check" }, cb));
+      /* the whole circle area is tappable, not just the 24px box */
+      li.appendChild(h("div", { class: "check", onclick: function (e) { if (e.target !== cb) cb.click(); } }, cb));
     } else li.appendChild(h("div", { class: "check" }));
 
     var body = h("div", { class: "body" });
