@@ -251,6 +251,30 @@ a.btn { text-decoration: none; display: inline-block; }
 #toast:not([hidden]) { animation: toast-in 0.45s var(--ease) both; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 24px) scale(0.9); } }
 
+.profile { position: relative; }
+.profile-btn { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; min-height: 44px; max-width: 240px; }
+[dir="rtl"] .profile-btn { padding: 4px 4px 4px 12px; }
+.profile-btn .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.profile-btn .caret { flex: none; color: var(--muted); transition: transform 0.2s var(--ease); }
+.profile-btn[aria-expanded="true"] .caret { transform: rotate(180deg); }
+.avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: linear-gradient(135deg, var(--navy), var(--accent)); color: var(--navy-fg); font-size: 13px; font-weight: 800; letter-spacing: 0.02em; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.big { width: 52px; height: 52px; font-size: 18px; }
+.profile-menu[hidden] { display: none; }
+body.gated #profile { display: none !important; }
+.profile-menu { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: 40; width: min(300px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lift); padding: 16px; display: flex; flex-direction: column; gap: 12px; animation: drop 0.25s var(--ease) both; }
+.pm-head { display: flex; align-items: center; gap: 12px; }
+.pm-id { display: flex; flex-direction: column; min-width: 0; }
+.pm-id b { font-size: 16px; color: var(--navy); overflow-wrap: anywhere; }
+.pm-email { font-size: 13px; color: var(--muted); direction: ltr; text-align: start; overflow-wrap: anywhere; }
+.pm-role { align-self: flex-start; margin-top: 4px; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--navy-soft); color: var(--navy); }
+.pm-row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); }
+.pm-row b { color: var(--fg); }
+.pm-out { align-self: stretch; min-height: 40px; }
+@media (max-width: 560px) {
+  .profile-btn .pname, .profile-btn .caret { display: none; }
+  .profile-btn, [dir="rtl"] .profile-btn { padding: 4px; }
+}
 .badge { align-self: center; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 999px; background: var(--navy); color: var(--navy-fg); }
 .links p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
 .link-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -298,6 +322,21 @@ button, a, input, summary, select { touch-action: manipulation; }
     </div>
     <div class="top-actions">
       <span class="badge" id="admin-badge" data-i18n="adminBadge" hidden>Admin</span>
+      <div class="profile" id="profile" hidden>
+        <button class="btn profile-btn" type="button" id="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-menu">
+          <span class="avatar" id="avatar" aria-hidden="true"></span>
+          <bdi class="pname" id="profile-name"></bdi>
+          <svg class="caret" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="profile-menu" id="profile-menu" hidden>
+          <div class="pm-head">
+            <span class="avatar big" id="avatar-big" aria-hidden="true"></span>
+            <div class="pm-id"><b><bdi id="pm-name"></bdi></b><span class="pm-email" id="pm-email"></span><span class="pm-role" id="pm-role"></span></div>
+          </div>
+          <div class="pm-row" id="pm-ks-row"><span data-i18n="pmKS">Key stages</span><b id="pm-ks"></b></div>
+          <button class="btn small pm-out" type="button" id="pm-signout" data-i18n="signOut">Sign out</button>
+        </div>
+      </div>
       <button class="btn" id="lang-btn" type="button">العربية</button>
       <button class="btn primary" id="new-btn" type="button" data-i18n="newTask" hidden>+ New task</button>
     </div>
@@ -530,7 +569,8 @@ button, a, input, summary, select { touch-action: manipulation; }
       gateTitle: "Sign in", gateIntro: "Use your Emeralds school Google account ({d}).", gateChecking: "Checking your sign-in…",
       wrongAcct: "{e} is not an Emeralds school account. Sign in with your {d} email.",
       ksHello: "Welcome, {n}", ksHint: "Choose once. You will see tasks for your key stage(s) and for all staff, and managers see which tasks you finished.",
-      meSigned: "Signed in as"
+      meSigned: "Signed in as",
+      pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Admin", roleSuper: "Super admin", profileLbl: "Your profile"
     },
     ar: {
       appTitle: "لوحة المهام", newTask: "+ مهمة جديدة", todayIs: "اليوم {d}.",
@@ -592,7 +632,8 @@ button, a, input, summary, select { touch-action: manipulation; }
       gateTitle: "تسجيل الدخول", gateIntro: "استخدم حساب Google المدرسي الخاص بإميرالدز ({d}).", gateChecking: "جارٍ التحقق من تسجيل الدخول…",
       wrongAcct: "{e} ليس حسابًا مدرسيًا لإميرالدز. سجّل الدخول ببريدك {d}.",
       ksHello: "مرحبًا، {n}", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
-      meSigned: "تم الدخول باسم"
+      meSigned: "تم الدخول باسم",
+      pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مشرف", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
     }
   };
   var $ = function (s) { return document.querySelector(s); };
@@ -1064,7 +1105,8 @@ button, a, input, summary, select { touch-action: manipulation; }
     $("#name-hello").textContent = t("ksHello", { n: ME.name || ME.email });
     $("#me-row").hidden = S.admin || askName;
     document.querySelectorAll("#name-groups .chip").forEach(function (c) { c.setAttribute("aria-pressed", String(NAME_KS.indexOf(c.dataset.n) !== -1)); });
-    $("#me-name").hidden = S.admin || !ME.uid;
+    $("#me-name").hidden = true;
+    renderProfile();
     var mn = $("#me-name-text"); mn.textContent = t("meSigned") + " "; mn.appendChild(h("bdi", { text: ME.name || ME.email }));
     if (!canEdit && !$("#form-panel").hidden) closeForm();
 
@@ -1217,6 +1259,59 @@ button, a, input, summary, select { touch-action: manipulation; }
       if (c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request") toast(t("signFail"));
     });
   });
+
+  /* ---- profile button in the header: Google photo or initials, name, and a small menu ---- */
+  function initials(n) {
+    var parts = String(n || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    var a = parts[0].charAt(0), b = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+    return (a + b).toUpperCase();
+  }
+  function fillAvatar(el) {
+    var key = ME.photo + "|" + ME.name;
+    if (el.dataset.key === key) return;
+    el.dataset.key = key; el.textContent = "";
+    if (ME.photo) {
+      var img = h("img", { src: ME.photo, alt: "", referrerpolicy: "no-referrer" });
+      img.addEventListener("error", function () { el.textContent = initials(ME.name); });
+      el.appendChild(img);
+    } else el.textContent = initials(ME.name);
+  }
+  function renderProfile() {
+    var show = !!S.allowed && !!ME.uid;
+    $("#profile").hidden = !show;
+    if (!show) { closeProfile(); return; }
+    var role = roleOf();
+    $("#profile-name").textContent = ME.name;
+    fillAvatar($("#avatar")); fillAvatar($("#avatar-big"));
+    $("#pm-name").textContent = ME.name;
+    $("#pm-email").textContent = ME.email;
+    $("#pm-role").textContent = t(role === "super" ? "roleSuper" : role === "admin" ? "roleAdmin" : "roleTeacher");
+    $("#pm-ks").textContent = MINE.length ? MINE.join(S.lang === "ar" ? "، " : ", ") : t("pmNoKS");
+    $("#profile-btn").setAttribute("aria-label", t("profileLbl") + ": " + ME.name);
+  }
+  function closeProfile() {
+    var m = $("#profile-menu");
+    if (m.hidden) return;
+    m.hidden = true; $("#profile-btn").setAttribute("aria-expanded", "false");
+  }
+  $("#profile-btn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    var m = $("#profile-menu"), open = m.hidden;
+    if (open) {
+      /* on phones, stretch the menu across the screen with a 16px margin each side */
+      var narrow = innerWidth <= 560, pr = $("#profile").getBoundingClientRect();
+      m.style.width = narrow ? (innerWidth - 32) + "px" : "";
+      m.style.left = narrow ? Math.round(16 - pr.left) + "px" : "";
+      m.style.insetInlineEnd = narrow ? "auto" : "";
+    }
+    m.hidden = !open; this.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", function (e) { if (!$("#profile").contains(e.target)) closeProfile(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$("#profile-menu").hidden) { closeProfile(); $("#profile-btn").focus(); }
+  });
+  $("#pm-signout").addEventListener("click", function () { closeProfile(); signOutAll(); });
 
   /* ---- actions ---- */
   function toggleDone(taskId, checked, li) {
@@ -1384,6 +1479,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       S.user = u && u.email ? u.email.toLowerCase() : "";
       ME.uid = u ? u.uid : ""; ME.email = S.user; ME.name = u ? String(u.displayName || "").replace(/\s+/g, " ").trim().slice(0, 80) : "";
       if (!ME.name) ME.name = S.user;
+      ME.photo = u && /^https:\/\//.test(u.photoURL || "") ? u.photoURL : "";
       if (u) S.authReady = false;
       watchAdmins(!!u);
       applyRole();
