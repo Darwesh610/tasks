@@ -187,6 +187,9 @@ html[lang="ar"] .top-text h1 { letter-spacing: 0; line-height: 1.5; }
 .name-card input { flex: 1; min-width: 160px; border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--bg); }
 .name-card input:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
 .name-card small { flex-basis: 100%; color: var(--muted); font-size: 13px; }
+.name-card .chips { flex-basis: 100%; }
+.name-card .form-error { flex-basis: 100%; }
+.name-card .form-error:empty { display: none; }
 .who { margin-top: 8px; font-size: 13px; }
 .who summary { cursor: pointer; font-weight: 700; color: var(--navy); width: fit-content; }
 .who h4 { font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 0 4px; }
@@ -382,8 +385,16 @@ a.btn { text-decoration: none; display: inline-block; }
   <form class="name-card" id="name-card" hidden>
     <b data-i18n="nameHead">Your name</b>
     <input id="f-name" type="text" maxlength="60" dir="auto" autocomplete="name" data-i18n-ph="namePh">
+    <b id="name-ks-lbl" data-i18n="nameKS">Your key stage(s)</b>
+    <div class="chips" id="name-groups" role="group" aria-labelledby="name-ks-lbl">
+      <button type="button" class="chip" data-n="KS1" aria-pressed="false">KS1</button>
+      <button type="button" class="chip" data-n="KS2" aria-pressed="false">KS2</button>
+      <button type="button" class="chip" data-n="KS3" aria-pressed="false">KS3</button>
+      <button type="button" class="chip" data-n="KS4" aria-pressed="false">KS4</button>
+    </div>
     <button class="btn small primary" type="submit" data-i18n="nameSave">Save</button>
     <small data-i18n="nameHint"></small>
+    <span class="form-error" id="name-error" role="alert"></span>
   </form>
 
   <div class="me-row" id="me-row" hidden>
@@ -456,7 +467,8 @@ a.btn { text-decoration: none; display: inline-block; }
       errTooBig: "The board is too large to save. Delete some old tasks first.",
       noStore: "This browser is not saving your ticks, so they will reset when you close the page.",
       nameHead: "Your name", namePh: "e.g. Ms Sara Ahmed", nameSave: "Save",
-      nameHint: "Type it once. Managers see it next to the tasks you tick as done. It is saved on this device.",
+      nameHint: "Do this once. Managers see your name next to the tasks you tick as done. Tasks for a key stage are counted only for its teachers. Saved on this device.",
+      nameKS: "Your key stage(s)", nameNoName: "Type your name.", nameNoKS: "Choose at least one key stage.",
       nameIs: "Your ticks are shared with managers as", nameChange: "Change name",
       nameNeed: "Add your name at the top so managers can see what you finished.",
       syncErr: "Your tick is saved on this device but has not reached the managers yet. Check your connection.",
@@ -504,7 +516,8 @@ a.btn { text-decoration: none; display: inline-block; }
       errTooBig: "اللوحة أكبر من أن تُحفظ. احذف بعض المهام القديمة أولًا.",
       noStore: "هذا المتصفح لا يحفظ علاماتك، لذا ستُمحى عند إغلاق الصفحة.",
       nameHead: "اسمك", namePh: "مثال: أ. سارة أحمد", nameSave: "حفظ",
-      nameHint: "اكتبه مرة واحدة. يظهر للمديرين بجانب المهام التي تنجزها. يُحفظ على هذا الجهاز.",
+      nameHint: "مرة واحدة فقط. يظهر اسمك للمديرين بجانب المهام التي تنجزها، وتُحسب مهام كل مرحلة لمعلميها فقط. يُحفظ على هذا الجهاز.",
+      nameKS: "مرحلتك الدراسية", nameNoName: "اكتب اسمك.", nameNoKS: "اختر مرحلة دراسية واحدة على الأقل.",
       nameIs: "تظهر علاماتك للمديرين باسم", nameChange: "تغيير الاسم",
       nameNeed: "أضف اسمك في الأعلى ليرى المديرون ما أنجزته.",
       syncErr: "حُفظت علامتك على هذا الجهاز لكنها لم تصل إلى المديرين بعد. تحقق من الاتصال.",
@@ -541,7 +554,7 @@ a.btn { text-decoration: none; display: inline-block; }
     try { localStorage.setItem("me-id", ME.id); } catch (e) {}
   }
   /* staff names and ticks, read by the admin page */
-  var PEOPLE = [], peopleUnsub = null, WHO_OPEN = {};
+  var PEOPLE = [], peopleUnsub = null, WHO_OPEN = {}, NAME_KS = [];
   /* when this browser first saw each task: a task counts as new for a day after that */
   var SEEN = {}, firstVisit = false, NEW_MS = 24 * 3600 * 1000;
   try {
@@ -796,9 +809,10 @@ a.btn { text-decoration: none; display: inline-block; }
       render();
     }, function () { PEOPLE = []; render(); });
   }
+  /* a task for all staff counts everyone; a key-stage task counts only teachers who chose that key stage */
   function forPerson(k, p) {
     var g = groupsOf(k);
-    return !g.length || p.all || g.some(function (x) { return p.groups.indexOf(x) !== -1; });
+    return !g.length || g.some(function (x) { return p.groups.indexOf(x) !== -1; });
   }
   function waLink(k, dl, links, still) {
     var msg = ["⏰ *" + t("waHead") + ": " + (k.title || t("untitled")) + "*", t("waDue") + ": " + dl.sub, t("waFor") + ": " + audLabel(k)];
@@ -951,8 +965,13 @@ a.btn { text-decoration: none; display: inline-block; }
     $("#me-row").hidden = S.admin;
     document.querySelectorAll("#my-groups .chip").forEach(function (c) { c.setAttribute("aria-pressed", String(MINE.indexOf(c.dataset.m) !== -1)); });
     $("#me-hint").textContent = t(MINE.length ? "myOn" : "myHint");
-    var askName = !S.admin && (!ME.name || S.renaming);
-    if ($("#name-card").hidden === askName) $("#name-card").hidden = !askName;
+    var askName = !S.admin && (!ME.name || !MINE.length || S.renaming);
+    if ($("#name-card").hidden === askName) {
+      $("#name-card").hidden = !askName;
+      if (askName) { if (!$("#f-name").value) $("#f-name").value = ME.name; NAME_KS = MINE.slice(); }
+    }
+    $("#me-row").hidden = S.admin || askName;
+    document.querySelectorAll("#name-groups .chip").forEach(function (c) { c.setAttribute("aria-pressed", String(NAME_KS.indexOf(c.dataset.n) !== -1)); });
     $("#me-name").hidden = S.admin || !ME.name || !!S.renaming;
     var mn = $("#me-name-text"); mn.textContent = t("nameIs") + " "; mn.appendChild(h("bdi", { text: ME.name }));
     if (!canEdit && !$("#form-panel").hidden) closeForm();
@@ -1099,13 +1118,24 @@ a.btn { text-decoration: none; display: inline-block; }
       S.animateAll = true; render(); syncMe();
     });
   });
+  document.querySelectorAll("#name-groups .chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      var i = NAME_KS.indexOf(c.dataset.n);
+      if (i === -1) NAME_KS.push(c.dataset.n); else NAME_KS.splice(i, 1);
+      NAME_KS = KS.filter(function (x) { return NAME_KS.indexOf(x) !== -1; });
+      $("#name-error").textContent = "";
+      render();
+    });
+  });
   $("#name-card").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var v = $("#f-name").value.replace(/\s+/g, " ").trim().slice(0, 60);
-    if (!v) { $("#f-name").focus(); return; }
-    ME.name = v; S.renaming = false;
-    try { localStorage.setItem("me-name", v); } catch (e) {}
-    render(); syncMe(); toast(t("saved"));
+    var v = $("#f-name").value.replace(/\s+/g, " ").trim().slice(0, 60), err = $("#name-error");
+    if (!v) { err.textContent = t("nameNoName"); $("#f-name").focus(); return; }
+    if (!NAME_KS.length) { err.textContent = t("nameNoKS"); $("#name-groups .chip").focus(); return; }
+    err.textContent = "";
+    ME.name = v; S.renaming = false; MINE = NAME_KS.slice();
+    try { localStorage.setItem("me-name", v); localStorage.setItem("my-groups", JSON.stringify(MINE)); } catch (e) {}
+    S.animateAll = true; render(); syncMe(); toast(t("saved"));
   });
   $("#name-change").addEventListener("click", function () {
     S.renaming = true; $("#f-name").value = ME.name; render(); $("#f-name").focus();
