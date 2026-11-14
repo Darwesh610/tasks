@@ -8,6 +8,8 @@ window.BOARD_CONFIG = {
     projectId: "emeralds-tasks",
     appId: "1:138667116872:web:4f3b5e6398635d30d50b7d"
   },
-  /* the email of the admin user you create in Firebase (SETUP.md, step 4) */
-  adminEmail: "codecrush610@gmail.com"
+  /* the super admin: the only account that can choose admins on the #super page */
+  adminEmail: "codecrush610@gmail.com",
+  /* only Google accounts with an email at this domain can open the board (plus the admins) */
+  schoolDomain: "emeralds-internationaledu.com"
 };
