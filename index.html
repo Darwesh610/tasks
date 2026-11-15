@@ -194,6 +194,17 @@ html[lang="ar"] .top-text h1 { letter-spacing: 0; line-height: 1.5; }
 .admin-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--line); }
 .admin-list li span { flex: 1; min-width: 0; direction: ltr; text-align: start; overflow-wrap: anywhere; font-size: 14px; }
 .admin-list li small { color: var(--muted); font-size: 12px; }
+.people-search { width: 100%; margin: 4px 0 8px; border: 1.5px solid var(--line); box-shadow: none; }
+.people-list .t-id { flex: 1; min-width: 180px; display: flex; flex-direction: column; }
+.people-list .t-id b { color: var(--navy); font-size: 15px; }
+.people-list .t-id small { direction: ltr; text-align: start; overflow-wrap: anywhere; font-size: 13px; }
+.people-list .t-tag { align-self: flex-start; margin-top: 4px; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.role-switch { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; background: var(--bg); }
+.role-switch button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; min-height: 36px; transition: background 0.2s, color 0.2s; }
+.role-switch button[aria-pressed="true"] { background: var(--navy); color: var(--navy-fg); }
+.role-switch button[data-r="manager"][aria-pressed="true"] { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: var(--accent-fg); }
+.role-fixed { font-size: 13px; font-weight: 800; padding: 6px 14px; border-radius: 999px; background: var(--navy-soft); color: var(--navy); }
+@media (pointer: coarse) { .role-switch button { min-height: 44px; } }
 .gate { max-width: 440px; margin: 40px auto; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .gate h2 { margin-bottom: 0; }
 .gate p { color: var(--muted); font-size: 14px; }
@@ -478,13 +489,14 @@ button, a, input, summary, select { touch-action: manipulation; }
   <section class="panel" id="super-panel" hidden>
     <h2 data-i18n="superTitle">Admins</h2>
     <p id="super-msg"></p>
+    <input class="search people-search" id="people-search" type="search" dir="auto" data-i18n-ph="peopleSearch" hidden>
     <form class="link-row" id="admin-add" hidden novalidate>
       <b data-i18n="addLbl">Add</b>
       <input id="f-admin-email" type="email" dir="ltr" autocomplete="off" data-i18n-ph="emailPh">
       <button class="btn small primary" type="submit" data-i18n="addAdmin">Add admin</button>
       <span class="form-error" id="admin-error" role="alert"></span>
     </form>
-    <ul class="admin-list" id="admin-list"></ul>
+    <ul class="admin-list people-list" id="admin-list"></ul>
   </section>
 
   <section class="summary" id="summary">
@@ -602,12 +614,13 @@ button, a, input, summary, select { touch-action: manipulation; }
       signInLbl: "Sign in", gSignIn: "Sign in with Google", pwAlt: "Use the shared password",
       signedAs: "Signed in as {e}", superTag: "super admin", notAdmin: "{e} is not an admin. Ask the super admin to add this email, or sign out and use another account.",
       signFail: "Sign-in didn't finish. Try again.", linkSuper: "Super admin link",
-      superTitle: "Super admin: who can post and edit tasks",
-      superIntro: "Add the school email of each person who may post and edit tasks. They open the admin link and press “Sign in with Google” with that account.",
+      superTitle: "Super admin: roles",
+      superIntro: "Everyone who has signed in or is on the staff list. Choose Manager to let someone post and edit tasks; Teacher to take that away. To make someone a manager before they sign in, add their school email below.",
       superOnly: "Only the super admin can manage admins. Sign in with the super admin account.",
-      superEmpty: "No admins added yet.", addLbl: "Add", addAdmin: "Add admin", emailPh: "name@emeralds-internationaledu.com",
+      superEmpty: "No admins added yet.", addLbl: "Add", addAdmin: "Add manager", emailPh: "name@emeralds-internationaledu.com",
       vEmail: "That doesn't look like an email address.", dupEmail: "That email is already an admin.",
       remove: "Remove", removeConfirm: "Tap again to remove", alwaysAdmin: "Super admin, always allowed",
+      peopleSearch: "Search people", peopleEmpty: "Nobody has signed in yet.", roleManager: "Manager", roleFor: "Role for {n}",
       gateTitle: "Sign in", gateIntro: "Use your Emeralds school Google account ({d}).", gateChecking: "Checking your sign-in…",
       wrongAcct: "{e} is not an Emeralds school account. Sign in with your {d} email.",
       ksHello: "Welcome, {n}", ksHint: "Choose carefully: once saved, only a manager can change them. You will see tasks for your key stage(s) and for all staff.",
@@ -620,7 +633,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       restoreBtn: "Restore tasks…", restoreBad: "That file is not a Task Board backup.", restoreYes: "Replace tasks",
       restoreAsk: "Replace the current {a} tasks with the {b} tasks from the backup of {d}?",
       meSigned: "Signed in as",
-      pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Admin", roleSuper: "Super admin", profileLbl: "Your profile"
+      pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Manager", roleSuper: "Super admin", profileLbl: "Your profile"
     },
     ar: {
       appTitle: "لوحة المهام", newTask: "+ مهمة جديدة", todayIs: "اليوم {d}.",
@@ -673,12 +686,13 @@ button, a, input, summary, select { touch-action: manipulation; }
       signInLbl: "الدخول", gSignIn: "الدخول بحساب Google", pwAlt: "استخدام كلمة المرور المشتركة",
       signedAs: "تم الدخول باسم {e}", superTag: "المشرف العام", notAdmin: "{e} ليس مشرفًا. اطلب من المشرف العام إضافة هذا البريد، أو اخرج واستخدم حسابًا آخر.",
       signFail: "لم يكتمل تسجيل الدخول. حاول مرة أخرى.", linkSuper: "رابط المشرف العام",
-      superTitle: "المشرف العام: من يمكنه نشر المهام وتعديلها",
-      superIntro: "أضف البريد المدرسي لكل شخص يمكنه نشر المهام وتعديلها. يفتح رابط المشرف ويضغط «الدخول بحساب Google» بهذا الحساب.",
+      superTitle: "المشرف العام: الأدوار",
+      superIntro: "كل من سجّل الدخول أو موجود في قائمة الموظفين. اختر «مدير» ليتمكن الشخص من نشر المهام وتعديلها، أو «معلم» لإلغاء ذلك. لجعل شخص مديرًا قبل أن يسجّل الدخول، أضف بريده المدرسي بالأسفل.",
       superOnly: "المشرف العام فقط يمكنه إدارة المشرفين. سجّل الدخول بحساب المشرف العام.",
-      superEmpty: "لم تتم إضافة مشرفين بعد.", addLbl: "إضافة", addAdmin: "إضافة مشرف", emailPh: "name@emeralds-internationaledu.com",
+      superEmpty: "لم تتم إضافة مشرفين بعد.", addLbl: "إضافة", addAdmin: "إضافة مدير", emailPh: "name@emeralds-internationaledu.com",
       vEmail: "هذا لا يبدو عنوان بريد إلكتروني.", dupEmail: "هذا البريد مشرف بالفعل.",
       remove: "إزالة", removeConfirm: "اضغط مرة أخرى للإزالة", alwaysAdmin: "المشرف العام، مسموح دائمًا",
+      peopleSearch: "ابحث عن شخص", peopleEmpty: "لم يسجّل أحد الدخول بعد.", roleManager: "مدير", roleFor: "دور {n}",
       gateTitle: "تسجيل الدخول", gateIntro: "استخدم حساب Google المدرسي الخاص بإميرالدز ({d}).", gateChecking: "جارٍ التحقق من تسجيل الدخول…",
       wrongAcct: "{e} ليس حسابًا مدرسيًا لإميرالدز. سجّل الدخول ببريدك {d}.",
       ksHello: "مرحبًا، {n}", ksHint: "اختر بعناية: بعد الحفظ لا يمكن تغييرها إلا من قِبل مدير. ستظهر لك مهام مرحلتك ومهام جميع الموظفين.",
@@ -691,11 +705,11 @@ button, a, input, summary, select { touch-action: manipulation; }
       restoreBtn: "استعادة المهام…", restoreBad: "هذا الملف ليس نسخة احتياطية للوحة المهام.", restoreYes: "استبدال المهام",
       restoreAsk: "استبدال المهام الحالية ({a}) بالمهام من النسخة الاحتياطية ({b}) بتاريخ {d}؟", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
       meSigned: "تم الدخول باسم",
-      pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مشرف", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
+      pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مدير", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
     }
   };
   var $ = function (s) { return document.querySelector(s); };
-  var S = { lang: "en", tasks: [], admin: false, readOnly: true, busy: false, loaded: false, dead: "", tab: "todo", q: "", editing: null, animateAll: true, seen: {} };
+  var S = { peopleQ: "", lang: "en", tasks: [], admin: false, readOnly: true, busy: false, loaded: false, dead: "", tab: "todo", q: "", editing: null, animateAll: true, seen: {} };
   var fb = null, user = null, toastTimer = 0;
   function cleanTasks(a) { return (Array.isArray(a) ? a : []).filter(function (k) { return k && k.id && k.due; }); }
   /* last known tasks, so the board paints at once and still shows something offline */
@@ -1407,20 +1421,35 @@ button, a, input, summary, select { touch-action: manipulation; }
     var isSup = role === "super";
     $("#super-msg").textContent = t(isSup ? "superIntro" : "superOnly");
     $("#admin-add").hidden = !isSup;
+    $("#people-search").hidden = !isSup;
     var ul = $("#admin-list"); ul.textContent = "";
     if (!isSup) return;
-    ul.appendChild(h("li", null, h("span", { text: SUPER }), h("small", { text: t("alwaysAdmin") })));
-    if (!ADMINS.length) ul.appendChild(h("li", null, h("small", { text: t("superEmpty") })));
-    ADMINS.forEach(function (e) {
-      var rm = h("button", { class: "btn small quiet", type: "button" }, t("remove"));
-      rm.addEventListener("click", function () {
-        if (rm.dataset.armed) { saveAdmins(ADMINS.filter(function (x) { return x !== e; })); return; }
-        rm.dataset.armed = "1"; rm.textContent = t("removeConfirm"); rm.classList.remove("quiet"); rm.classList.add("danger");
-        setTimeout(function () { delete rm.dataset.armed; rm.textContent = t("remove"); rm.classList.remove("danger"); rm.classList.add("quiet"); }, 3500);
-      });
-      ul.appendChild(h("li", null, h("span", { text: e }), rm));
+    /* everyone who signed in or is on the staff list, plus any manager email not yet among them */
+    var rows = PEOPLE.map(function (p) { return { name: p.name, email: p.email, signedIn: p.signedIn }; });
+    ADMINS.forEach(function (e) { if (!rows.some(function (r) { return r.email === e; })) rows.push({ name: e, email: e, signedIn: false }); });
+    rows = rows.filter(function (r) { return r.email !== SUPER; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, locale()); });
+    ul.appendChild(h("li", null, h("div", { class: "t-id" }, h("b", null, h("bdi", { text: ME.email === SUPER ? ME.name : SUPER })), h("small", { text: SUPER })),
+      h("span", { class: "role-fixed", text: t("roleSuper") })));
+    var q = S.peopleQ.trim().toLowerCase();
+    var shown = rows.filter(function (r) { return !q || (r.name + " " + r.email).toLowerCase().indexOf(q) !== -1; });
+    if (!rows.length) { ul.appendChild(h("li", null, h("small", { text: t("peopleEmpty") }))); return; }
+    if (!shown.length) { ul.appendChild(h("li", null, h("small", { text: t("noMatch", { q: S.peopleQ.trim() }) }))); return; }
+    shown.forEach(function (r) {
+      var isMgr = ADMINS.indexOf(r.email) !== -1;
+      function pick(makeMgr) {
+        if (makeMgr === isMgr) return;
+        saveAdmins(makeMgr ? ADMINS.concat([r.email]) : ADMINS.filter(function (x) { return x !== r.email; }));
+      }
+      var sw = h("div", { class: "role-switch", role: "group", "aria-label": t("roleFor", { n: r.name }) },
+        h("button", { type: "button", "data-r": "teacher", "aria-pressed": String(!isMgr), onclick: function () { pick(false); } }, t("roleTeacher")),
+        h("button", { type: "button", "data-r": "manager", "aria-pressed": String(isMgr), onclick: function () { pick(true); } }, t("roleManager")));
+      var id = h("div", { class: "t-id" }, h("b", null, h("bdi", { text: r.name })), h("small", { text: r.email }));
+      if (!r.signedIn) id.appendChild(h("span", { class: "t-tag", text: t("notSigned") }));
+      ul.appendChild(h("li", null, id, sw));
     });
   }
+  $("#people-search").addEventListener("input", function (e) { S.peopleQ = e.target.value; render(); });
   function saveAdmins(list) {
     if (!fb || roleOf() !== "super") { toast(t("superOnly")); return; }
     toast(t("saving"));
