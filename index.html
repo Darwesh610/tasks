@@ -1535,6 +1535,8 @@ button, a, input, summary, select { touch-action: manipulation; }
       var db = firebase.firestore();
       fb = { auth: firebase.auth(), db: db, doc: db.doc("board/tasks"), email: cfg.adminEmail || "" };
     } catch (e) { S.dead = "deadSetup"; render(); return; }
+    /* never remember a sign-in after the tab is closed: everyone signs in again next time */
+    try { fb.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function () {}); } catch (e) {}
     fb.auth.onAuthStateChanged(function (u) {
       S.user = u && u.email ? u.email.toLowerCase() : "";
       ME.uid = u ? u.uid : ""; ME.email = S.user; ME.name = u ? niceName(u.displayName).slice(0, 80) : "";
