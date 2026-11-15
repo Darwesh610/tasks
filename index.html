@@ -625,7 +625,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       wrongAcct: "{e} is not an Emeralds school account. Sign in with your {d} email.",
       ksHello: "Welcome, {n}", ksHint: "Choose carefully: once saved, only a manager can change them. You will see tasks for your key stage(s) and for all staff.",
       myLocked: "Your key stages are set. Ask a manager if they need changing.",
-      teachersTitle: "Teachers", teachersHint: "Everyone on the staff list or who has signed in. Teachers cannot change their key stages after choosing; tap a key stage here to fix a mistake.", noTeachers: "No teachers yet. Add them below.",
+      teachersTitle: "Teachers", teachersHint: "Everyone on the staff list or who has signed in. Teachers cannot change their key stages after choosing; tap a key stage here to fix a mistake. The super admin also sees a Teacher / Manager switch for each person.", noTeachers: "No teachers yet. Add them below.",
       rosterLbl: "Add teachers: one per line, with name, school email and key stages", rosterPh: "Sara Ahmed, sara.ahmed@emeralds-internationaledu.com, KS1 KS2",
       rosterAdd: "Add to the list", rosterBad: "Line {n} has no email address.", rosterEmpty: "Type at least one teacher.", rosterMany: "Add at most 300 teachers at a time.",
       rosterDone: "Added {n} to the staff list.", notSigned: "Not signed in yet", removeT: "Remove", removeTConfirm: "Tap again to remove",
@@ -1328,7 +1328,8 @@ button, a, input, summary, select { touch-action: manipulation; }
       });
       var id = h("div", { class: "t-id" }, h("b", null, h("bdi", { text: p.name })), h("small", { text: p.email }));
       if (!p.signedIn) id.appendChild(h("span", { class: "t-tag", text: t("notSigned") }));
-      ul.appendChild(h("li", null, id, chips, rm));
+      var sw = roleOf() === "super" && p.email !== SUPER ? roleSwitch(p.email, p.name) : null;
+      ul.appendChild(h("li", null, id, sw, chips, rm));
     });
   }
   function setTeacherGroups(p, groups) {
@@ -1415,6 +1416,17 @@ button, a, input, summary, select { touch-action: manipulation; }
   });
   $("#restore-no").addEventListener("click", function () { S.restore = null; render(); });
 
+  /* Teacher | Manager switch; only ever shown to the super admin */
+  function roleSwitch(email, name) {
+    var isMgr = ADMINS.indexOf(email) !== -1;
+    function pick(makeMgr) {
+      if (makeMgr === isMgr) return;
+      saveAdmins(makeMgr ? ADMINS.concat([email]) : ADMINS.filter(function (x) { return x !== email; }));
+    }
+    return h("div", { class: "role-switch", role: "group", "aria-label": t("roleFor", { n: name }) },
+      h("button", { type: "button", "data-r": "teacher", "aria-pressed": String(!isMgr), onclick: function () { pick(false); } }, t("roleTeacher")),
+      h("button", { type: "button", "data-r": "manager", "aria-pressed": String(isMgr), onclick: function () { pick(true); } }, t("roleManager")));
+  }
   function renderSuper(role) {
     $("#super-panel").hidden = !S.super;
     if (!S.super) return;
@@ -1436,14 +1448,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     if (!rows.length) { ul.appendChild(h("li", null, h("small", { text: t("peopleEmpty") }))); return; }
     if (!shown.length) { ul.appendChild(h("li", null, h("small", { text: t("noMatch", { q: S.peopleQ.trim() }) }))); return; }
     shown.forEach(function (r) {
-      var isMgr = ADMINS.indexOf(r.email) !== -1;
-      function pick(makeMgr) {
-        if (makeMgr === isMgr) return;
-        saveAdmins(makeMgr ? ADMINS.concat([r.email]) : ADMINS.filter(function (x) { return x !== r.email; }));
-      }
-      var sw = h("div", { class: "role-switch", role: "group", "aria-label": t("roleFor", { n: r.name }) },
-        h("button", { type: "button", "data-r": "teacher", "aria-pressed": String(!isMgr), onclick: function () { pick(false); } }, t("roleTeacher")),
-        h("button", { type: "button", "data-r": "manager", "aria-pressed": String(isMgr), onclick: function () { pick(true); } }, t("roleManager")));
+      var sw = roleSwitch(r.email, r.name);
       var id = h("div", { class: "t-id" }, h("b", null, h("bdi", { text: r.name })), h("small", { text: r.email }));
       if (!r.signedIn) id.appendChild(h("span", { class: "t-tag", text: t("notSigned") }));
       ul.appendChild(h("li", null, id, sw));
