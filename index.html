@@ -1200,8 +1200,9 @@ button, a, input, summary, select { touch-action: manipulation; }
     $("#signed-text").textContent = role ? t("signedAs", { e: S.user }) + (role === "super" ? " (" + t("superTag") + ")" : "") + "."
       : (S.adminsLoaded ? t("notAdmin", { e: S.user }) : t("signedAs", { e: S.user }) + ".");
     $("#super-link-row").hidden = !(S.admin && role === "super");
-    $("#backup-row").hidden = !(S.admin && !S.super && !S.readOnly);
-    $("#restore-row").hidden = !(S.restore && S.admin && !S.readOnly);
+    /* backup and restore: super admin only */
+    $("#backup-row").hidden = !(S.admin && !S.super && role === "super");
+    $("#restore-row").hidden = !(S.restore && S.admin && role === "super");
     if (S.restore) $("#restore-text").textContent = t("restoreAsk", { a: S.tasks.length, b: S.restore.tasks.length, d: S.restore.savedAt });
     renderSuper(role);
     $(".tabs").hidden = S.admin;
@@ -1389,7 +1390,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
   $("#backup-btn").addEventListener("click", function () {
-    if (!fb || S.readOnly) return;
+    if (!fb || roleOf() !== "super") return;
     toast(t("saving"));
     function all(name) { return fb.db.collection(name).get().then(function (qs) { var o = {}; qs.forEach(function (d) { o[d.id] = d.data(); }); return o; }); }
     Promise.all([fb.doc.get(), all("staff"), all("roster"), fb.db.doc("config/admins").get()]).then(function (r) {
@@ -1401,7 +1402,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       toast(t("backupDone"));
     }, function () { toast(t("errSave")); });
   });
-  $("#restore-btn").addEventListener("click", function () { $("#f-restore").click(); });
+  $("#restore-btn").addEventListener("click", function () { if (roleOf() === "super") $("#f-restore").click(); });
   $("#f-restore").addEventListener("change", function () {
     var f = this.files && this.files[0]; this.value = "";
     if (!f) return;
@@ -1414,7 +1415,7 @@ button, a, input, summary, select { touch-action: manipulation; }
   });
   $("#restore-yes").addEventListener("click", function () {
     var r = S.restore; S.restore = null; render();
-    if (r) saveTasks(function () { return r.tasks; });
+    if (r && roleOf() === "super") saveTasks(function () { return r.tasks; });
   });
   $("#restore-no").addEventListener("click", function () { S.restore = null; render(); });
 
