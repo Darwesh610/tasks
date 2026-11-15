@@ -1464,6 +1464,18 @@ button, a, input, summary, select { touch-action: manipulation; }
     err.textContent = ""; inp.value = "";
     saveAdmins(ADMINS.concat([e]));
   });
+  /* a non-school email may still be let in if it is on the staff list; listening means that
+     taking someone off the list signs them out straight away */
+  var listedUnsub = null;
+  function watchListed(email) {
+    if (listedUnsub) { listedUnsub(); listedUnsub = null; }
+    S.listed = false; S.listedLoaded = !email;
+    if (!email || !fb) return;
+    listedUnsub = fb.db.collection("roster").doc(email).onSnapshot(function (snap) {
+      if (S.user !== email) return;
+      S.listed = snap.exists; S.listedLoaded = true; applyRole();
+    }, function () { if (S.user !== email) return; S.listed = false; S.listedLoaded = true; applyRole(); });
+  }
   function watchAdmins(on) {
     if (adminsUnsub) { adminsUnsub(); adminsUnsub = null; }
     ADMINS = []; S.adminsLoaded = false;
@@ -1475,9 +1487,10 @@ button, a, input, summary, select { touch-action: manipulation; }
   }
   function applyRole() {
     var role = roleOf();
-    /* a school account gets in straight away; any other account only if it is on the admin list */
-    S.authReady = !S.user || domainOK(S.user) || !!role || !!S.adminsLoaded;
-    S.allowed = !!S.user && (domainOK(S.user) || !!role);
+    /* a school account gets in straight away; any other account only if it is a manager
+       or the managers put that email on the staff list */
+    S.authReady = !S.user || domainOK(S.user) || !!role || (!!S.adminsLoaded && !!S.listedLoaded);
+    S.allowed = !!S.user && (domainOK(S.user) || !!role || !!S.listed);
     if (S.user && !S.allowed && S.authReady) {
       S.gateErr = t("wrongAcct", { e: S.user, d: "@" + SCHOOL });
       signOutAll();
@@ -1725,6 +1738,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       ME.photo = u && /^https:\/\//.test(u.photoURL || "") ? u.photoURL : "";
       if (u) S.authReady = false;
       watchAdmins(!!u);
+      watchListed(S.user && !domainOK(S.user) ? S.user : "");
       applyRole();
     });
   }
