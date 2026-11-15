@@ -202,6 +202,18 @@ html[lang="ar"] .top-text h1 { letter-spacing: 0; line-height: 1.5; }
 .gate .form-error { color: var(--danger); background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 12px; padding: 10px 14px; font-size: 14px; font-weight: 600; }
 .gate .form-error:empty { display: none; }
 body.gated .wrap > :not(#gate), body.gated #new-btn, body.gated #admin-badge { display: none !important; }
+.chip:disabled { cursor: default; }
+.chip:disabled:hover { transform: none; border-color: var(--line); }
+.teachers summary { cursor: pointer; font-size: 18px; font-weight: 800; color: var(--navy); list-style-position: inside; }
+.teachers .count { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--navy-soft); color: var(--navy); vertical-align: 3px; }
+.teachers-hint { color: var(--muted); font-size: 13px; margin: 10px 0 4px; }
+.teacher-list { list-style: none; display: flex; flex-direction: column; }
+.teacher-list li { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--line); }
+.teacher-list .t-id { flex: 1; min-width: 180px; display: flex; flex-direction: column; }
+.teacher-list .t-id b { color: var(--navy); }
+.teacher-list .t-id small { color: var(--muted); direction: ltr; text-align: start; overflow-wrap: anywhere; }
+.teacher-list .chip { padding: 4px 12px; font-size: 13px; }
+.super-mode #teachers-panel { display: none !important; }
 .super-mode #summary, .super-mode .toolbar, .super-mode #board, .super-mode #progress, .super-mode #notice, .super-mode #form-panel, .super-mode #new-btn { display: none !important; }
 .name-card .form-error { flex-basis: 100%; }
 .name-card .form-error:empty { display: none; }
@@ -433,6 +445,12 @@ button, a, input, summary, select { touch-action: manipulation; }
     </div>
   </section>
 
+  <details class="panel teachers" id="teachers-panel" hidden>
+    <summary><span data-i18n="teachersTitle">Teachers</span> <span class="count" id="teachers-count"></span></summary>
+    <p class="teachers-hint" data-i18n="teachersHint"></p>
+    <ul class="teacher-list" id="teacher-list"></ul>
+  </details>
+
   <section class="panel" id="super-panel" hidden>
     <h2 data-i18n="superTitle">Admins</h2>
     <p id="super-msg"></p>
@@ -555,7 +573,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       nameIs: "Your ticks are shared with managers as", nameChange: "Change name",
       nameNeed: "Add your name at the top so managers can see what you finished.",
       syncErr: "Your tick is saved on this device but has not reached the managers yet. Check your connection.",
-      whoDone: "{d} of {n} done", whoNone: "No staff names yet. They appear when teachers add their name.",
+      whoDone: "Assigned to {n} · {d} done", whoNone: "No teachers in this key stage have signed in yet.",
       whoYes: "Done", whoNo: "Not done yet", waRemindNot: "Remind those not done", waStill: "Still to do",
       signInLbl: "Sign in", gSignIn: "Sign in with Google", pwAlt: "Use the shared password",
       signedAs: "Signed in as {e}", superTag: "super admin", notAdmin: "{e} is not an admin. Ask the super admin to add this email, or sign out and use another account.",
@@ -568,7 +586,9 @@ button, a, input, summary, select { touch-action: manipulation; }
       remove: "Remove", removeConfirm: "Tap again to remove", alwaysAdmin: "Super admin, always allowed",
       gateTitle: "Sign in", gateIntro: "Use your Emeralds school Google account ({d}).", gateChecking: "Checking your sign-in…",
       wrongAcct: "{e} is not an Emeralds school account. Sign in with your {d} email.",
-      ksHello: "Welcome, {n}", ksHint: "Choose once. You will see tasks for your key stage(s) and for all staff, and managers see which tasks you finished.",
+      ksHello: "Welcome, {n}", ksHint: "Choose carefully: once saved, only a manager can change them. You will see tasks for your key stage(s) and for all staff.",
+      myLocked: "Your key stages are set. Ask a manager if they need changing.",
+      teachersTitle: "Teachers", teachersHint: "The key stages each teacher chose. Teachers cannot change them after choosing; tap a key stage here to fix a mistake.", noTeachers: "No teachers have signed in yet.",
       meSigned: "Signed in as",
       pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Admin", roleSuper: "Super admin", profileLbl: "Your profile"
     },
@@ -618,7 +638,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       nameIs: "تظهر علاماتك للمديرين باسم", nameChange: "تغيير الاسم",
       nameNeed: "أضف اسمك في الأعلى ليرى المديرون ما أنجزته.",
       syncErr: "حُفظت علامتك على هذا الجهاز لكنها لم تصل إلى المديرين بعد. تحقق من الاتصال.",
-      whoDone: "أنجزها {d} من {n}", whoNone: "لا توجد أسماء موظفين بعد. تظهر عندما يضيف المعلمون أسماءهم.",
+      whoDone: "مُسندة إلى {n} · أنجزها {d}", whoNone: "لم يسجّل أي معلم من هذه المرحلة الدخول بعد.",
       whoYes: "أنجزوها", whoNo: "لم ينجزوها بعد", waRemindNot: "تذكير من لم ينجز", waStill: "لم ينجزها بعد",
       signInLbl: "الدخول", gSignIn: "الدخول بحساب Google", pwAlt: "استخدام كلمة المرور المشتركة",
       signedAs: "تم الدخول باسم {e}", superTag: "المشرف العام", notAdmin: "{e} ليس مشرفًا. اطلب من المشرف العام إضافة هذا البريد، أو اخرج واستخدم حسابًا آخر.",
@@ -631,7 +651,9 @@ button, a, input, summary, select { touch-action: manipulation; }
       remove: "إزالة", removeConfirm: "اضغط مرة أخرى للإزالة", alwaysAdmin: "المشرف العام، مسموح دائمًا",
       gateTitle: "تسجيل الدخول", gateIntro: "استخدم حساب Google المدرسي الخاص بإميرالدز ({d}).", gateChecking: "جارٍ التحقق من تسجيل الدخول…",
       wrongAcct: "{e} ليس حسابًا مدرسيًا لإميرالدز. سجّل الدخول ببريدك {d}.",
-      ksHello: "مرحبًا، {n}", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
+      ksHello: "مرحبًا، {n}", ksHint: "اختر بعناية: بعد الحفظ لا يمكن تغييرها إلا من قِبل مدير. ستظهر لك مهام مرحلتك ومهام جميع الموظفين.",
+      myLocked: "تم تحديد مراحلك الدراسية. اطلب من مدير تغييرها إن لزم.",
+      teachersTitle: "المعلمون", teachersHint: "المراحل التي اختارها كل معلم. لا يمكن للمعلمين تغييرها بعد الاختيار؛ اضغط على مرحلة هنا لتصحيح خطأ.", noTeachers: "لم يسجّل أي معلم الدخول بعد.", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
       meSigned: "تم الدخول باسم",
       pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مشرف", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
     }
@@ -655,7 +677,11 @@ button, a, input, summary, select { touch-action: manipulation; }
     try { localStorage.setItem("done-v1", JSON.stringify(DONE)); storeOK = true; } catch (e) { storeOK = false; }
   }
   /* the signed-in person: their Google account id, name and email */
-  var ME = { uid: "", name: "", email: "" }, loadedMineFor = "";
+  var ME = { uid: "", name: "", email: "" }, loadedMineFor = "", mineUnsub = null;
+  /* the key stages saved in the database: once set, only a manager can change them */
+  var LOCKED = [];
+  /* Google sometimes gives names in lower case: show "mohamed darwesh" as "Mohamed Darwesh" */
+  function niceName(n) { n = String(n || "").replace(/\s+/g, " ").trim(); return n && n === n.toLowerCase() ? n.replace(/(^|[\s'-])(\S)/g, function (m, a, b) { return a + b.toUpperCase(); }) : n; }
   var SCHOOL = String((window.BOARD_CONFIG && window.BOARD_CONFIG.schoolDomain) || "").toLowerCase();
   function domainOK(e) { return !!SCHOOL && e.slice(-(SCHOOL.length + 1)) === "@" + SCHOOL; }
   /* staff names and ticks, read by the admin page */
@@ -903,7 +929,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       var keys = Object.keys(DONE).sort(function (a, b) { return String(DONE[b]).localeCompare(String(DONE[a])); }).slice(0, 400);
       var done = {};
       keys.forEach(function (k) { done[k] = String(DONE[k]).slice(0, 40); });
-      fb.db.collection("staff").doc(ME.uid).set({ name: ME.name, email: ME.email, groups: MINE.slice(), done: done, updatedAt: new Date().toISOString() })
+      fb.db.collection("staff").doc(ME.uid).set({ name: ME.name, email: ME.email, groups: (LOCKED.length ? LOCKED : MINE).slice(), done: done, updatedAt: new Date().toISOString() })
         .catch(function () { toast(t("syncErr")); });
     }, 600);
   }
@@ -919,7 +945,8 @@ button, a, input, summary, select { touch-action: manipulation; }
         if (!em) return;
         if (!nm) nm = em;
         var key = em;
-        var p = byName[key] || (byName[key] = { name: nm, groups: [], all: false, done: {} });
+        var p = byName[key] || (byName[key] = { name: niceName(nm), email: em, ids: [], groups: [], all: false, done: {} });
+        p.ids.push(d.id);
         var g = onlyKS(x.groups);
         if (!g.length) p.all = true;
         g.forEach(function (y) { if (p.groups.indexOf(y) === -1) p.groups.push(y); });
@@ -1095,9 +1122,13 @@ button, a, input, summary, select { touch-action: manipulation; }
     renderSuper(role);
     $(".tabs").hidden = S.admin;
     $("#me-row").hidden = S.admin;
-    document.querySelectorAll("#my-groups .chip").forEach(function (c) { c.setAttribute("aria-pressed", String(MINE.indexOf(c.dataset.m) !== -1)); });
-    $("#me-hint").textContent = t(MINE.length ? "myOn" : "myHint");
-    var askName = !S.admin && S.allowed && loadedMineFor === ME.uid && !MINE.length;
+    document.querySelectorAll("#my-groups .chip").forEach(function (c) {
+      c.setAttribute("aria-pressed", String(MINE.indexOf(c.dataset.m) !== -1));
+      c.disabled = !!LOCKED.length;
+    });
+    $("#me-hint").textContent = t(LOCKED.length ? "myLocked" : MINE.length ? "myOn" : "myHint");
+    renderTeachers();
+    var askName = !S.admin && S.allowed && loadedMineFor === ME.uid && !LOCKED.length;
     if ($("#name-card").hidden === askName) {
       $("#name-card").hidden = !askName;
       if (askName) NAME_KS = MINE.slice();
@@ -1189,6 +1220,33 @@ button, a, input, summary, select { touch-action: manipulation; }
   }
 
   /* ---- super admin page (#super): only the super admin can add or remove admin emails ---- */
+  /* admin page: every teacher with the key stages they chose; tapping a key stage fixes a mistake */
+  function renderTeachers() {
+    var show = S.admin && !S.super && !S.readOnly && S.allowed;
+    $("#teachers-panel").hidden = !show;
+    if (!show) return;
+    $("#teachers-count").textContent = String(PEOPLE.length);
+    var ul = $("#teacher-list"); ul.textContent = "";
+    if (!PEOPLE.length) { ul.appendChild(h("li", null, h("small", { text: t("noTeachers") }))); return; }
+    PEOPLE.forEach(function (p) {
+      var chips = h("div", { class: "chips", role: "group", "aria-label": p.name });
+      KS.forEach(function (ks) {
+        var on = p.groups.indexOf(ks) !== -1;
+        chips.appendChild(h("button", { class: "chip", type: "button", "aria-pressed": String(on), onclick: function () {
+          var next = on ? p.groups.filter(function (x) { return x !== ks; }) : KS.filter(function (x) { return x === ks || p.groups.indexOf(x) !== -1; });
+          setTeacherGroups(p, next);
+        } }, ks));
+      });
+      ul.appendChild(h("li", null, h("div", { class: "t-id" }, h("b", null, h("bdi", { text: p.name })), h("small", { text: p.email })), chips));
+    });
+  }
+  function setTeacherGroups(p, groups) {
+    if (!fb || S.readOnly) return;
+    toast(t("saving"));
+    Promise.all(p.ids.map(function (id) { return fb.db.collection("staff").doc(id).update({ groups: groups }); }))
+      .then(function () { toast(t("saved")); }, function () { toast(t("errSave")); });
+  }
+
   function renderSuper(role) {
     $("#super-panel").hidden = !S.super;
     if (!S.super) return;
@@ -1369,6 +1427,7 @@ button, a, input, summary, select { touch-action: manipulation; }
   });
   document.querySelectorAll("#my-groups .chip").forEach(function (c) {
     c.addEventListener("click", function () {
+      if (LOCKED.length) return;
       var i = MINE.indexOf(c.dataset.m);
       if (i === -1) MINE.push(c.dataset.m); else MINE.splice(i, 1);
       MINE = KS.filter(function (x) { return MINE.indexOf(x) !== -1; });
@@ -1390,14 +1449,15 @@ button, a, input, summary, select { touch-action: manipulation; }
     var err = $("#name-error");
     if (!NAME_KS.length) { err.textContent = t("nameNoKS"); $("#name-groups .chip").focus(); return; }
     err.textContent = "";
-    MINE = NAME_KS.slice();
+    MINE = NAME_KS.slice(); LOCKED = MINE.slice();
     try { localStorage.setItem("my-groups", JSON.stringify(MINE)); } catch (e) {}
     S.animateAll = true; render(); syncMe(); toast(t("saved"));
   });
   function signOutAll() {
     if (!fb) return;
     /* forget this person's ticks and key stages on this device; they come back from the database at the next sign-in */
-    DONE = {}; MINE = []; loadedMineFor = "";
+    DONE = {}; MINE = []; LOCKED = []; loadedMineFor = "";
+    if (mineUnsub) { mineUnsub(); mineUnsub = null; }
     try { localStorage.removeItem("tasks-cache"); localStorage.removeItem("my-groups"); } catch (e) {}
     saveDone();
     fb.auth.signOut();
@@ -1477,7 +1537,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     } catch (e) { S.dead = "deadSetup"; render(); return; }
     fb.auth.onAuthStateChanged(function (u) {
       S.user = u && u.email ? u.email.toLowerCase() : "";
-      ME.uid = u ? u.uid : ""; ME.email = S.user; ME.name = u ? String(u.displayName || "").replace(/\s+/g, " ").trim().slice(0, 80) : "";
+      ME.uid = u ? u.uid : ""; ME.email = S.user; ME.name = u ? niceName(u.displayName).slice(0, 80) : "";
       if (!ME.name) ME.name = S.user;
       ME.photo = u && /^https:\/\//.test(u.photoURL || "") ? u.photoURL : "";
       if (u) S.authReady = false;
@@ -1504,17 +1564,24 @@ button, a, input, summary, select { touch-action: manipulation; }
   /* once per account: bring back this person's key stages and ticks from other devices */
   function loadMine() {
     if (!fb || !ME.uid || loadedMineFor === ME.uid) return;
-    var uid = ME.uid;
-    fb.db.collection("staff").doc(uid).get().then(function (snap) {
+    var uid = ME.uid, first = true;
+    if (mineUnsub) { mineUnsub(); mineUnsub = null; }
+    /* listen, so a manager's change to this teacher's key stages shows up straight away */
+    mineUnsub = fb.db.collection("staff").doc(uid).onSnapshot(function (snap) {
       if (ME.uid !== uid) return;
       var x = snap.exists ? (snap.data() || {}) : {};
-      Object.keys(x.done || {}).forEach(function (k) { if (!DONE[k]) DONE[k] = String(x.done[k]); });
-      saveDone();
-      if (!MINE.length) {
-        MINE = onlyKS(x.groups);
+      if (first) {
+        Object.keys(x.done || {}).forEach(function (k) { if (!DONE[k]) DONE[k] = String(x.done[k]); });
+        saveDone();
+      }
+      LOCKED = onlyKS(x.groups);
+      if (LOCKED.length || !first) {
+        MINE = LOCKED.slice();
         try { localStorage.setItem("my-groups", JSON.stringify(MINE)); } catch (e) {}
       }
-      loadedMineFor = uid; S.animateAll = true; render(); syncMe();
+      var wasFirst = first; first = false;
+      loadedMineFor = uid; S.animateAll = wasFirst; render();
+      if (wasFirst) syncMe();
     }, function () { if (ME.uid === uid) { loadedMineFor = uid; render(); } });
   }
   $("#signout-btn").addEventListener("click", signOutAll);
