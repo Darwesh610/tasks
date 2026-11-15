@@ -171,6 +171,38 @@ html[lang="ar"] .top-text h1 { letter-spacing: 0; line-height: 1.5; }
 .task.late .title, .task.late .due span { color: var(--danger); }
 .task.late .due.overdue strong { background: var(--danger); color: var(--navy-fg); }
 .task.late .check input { border-color: var(--danger); }
+/* due within 2 days (or overdue) and not done: red, with a soft pulsing glow */
+.task.soon { background: var(--danger-soft); box-shadow: inset 0 0 0 1.5px var(--danger), var(--shadow); animation: soon-glow 2.4s ease-in-out infinite; }
+.task.soon.enter { animation: card-in 0.6s var(--ease) both, soon-glow 2.4s ease-in-out 0.6s infinite; animation-delay: calc(var(--i, 0) * 70ms), 0.6s; }
+.task.soon .title, .task.soon .due span { color: var(--danger); }
+.task.soon .due strong { background: var(--danger); color: var(--navy-fg); }
+.task.soon .check input { border-color: var(--danger); }
+@keyframes soon-glow { 0%, 100% { box-shadow: inset 0 0 0 1.5px var(--danger), 0 0 0 0 rgba(198, 47, 42, 0.35), var(--shadow); } 50% { box-shadow: inset 0 0 0 1.5px var(--danger), 0 0 0 8px rgba(198, 47, 42, 0), var(--shadow); } }
+.tag.soon-tag { background: var(--danger); color: var(--navy-fg); }
+.task.flash { animation: flash 1.6s var(--ease) 1 !important; }
+@keyframes flash { 0%, 40%, 80% { transform: scale(1.02); box-shadow: inset 0 0 0 3px var(--danger), 0 0 0 10px rgba(198, 47, 42, 0.18); } 20%, 60%, 100% { transform: none; } }
+/* the "due soon" notification that slides in when the board opens */
+.soon-alert { position: fixed; z-index: 50; top: 96px; inset-inline-end: 16px; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lift); border-inline-start: 5px solid var(--danger); padding: 14px 16px 12px; animation: alert-in 0.6s var(--ease) both; }
+.soon-alert[hidden] { display: none; }
+.soon-alert.leaving { animation: alert-out 0.3s ease-in both; }
+@keyframes alert-in { from { opacity: 0; transform: translateX(40px) scale(0.96); } }
+[dir="rtl"] .soon-alert { animation-name: alert-in-rtl; }
+@keyframes alert-in-rtl { from { opacity: 0; transform: translateX(-40px) scale(0.96); } }
+@keyframes alert-out { to { opacity: 0; transform: translateY(-12px) scale(0.97); } }
+.soon-head { display: flex; align-items: center; gap: 10px; }
+.soon-bell { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--danger-soft); color: var(--danger); }
+.soon-bell svg { animation: ring 1.2s ease-in-out 0.5s 3; transform-origin: 50% 4px; }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(18deg); } 30% { transform: rotate(-16deg); } 45% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 75% { transform: rotate(4deg); } }
+.soon-head b { flex: 1; font-size: 15px; color: var(--danger); line-height: 1.3; }
+.soon-close { flex: none; border: 0; background: transparent; color: var(--muted); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 20px; line-height: 1; }
+.soon-close:hover { background: var(--navy-soft); color: var(--navy); }
+.soon-alert small { display: block; color: var(--muted); font-size: 12px; margin: 6px 0 4px; }
+.soon-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
+.soon-list button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 8px 12px; cursor: pointer; min-height: 44px; }
+.soon-list button:hover { border-color: var(--danger); background: var(--danger-soft); }
+.soon-list .st { font-weight: 700; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.soon-list .sd { flex: none; font-size: 12px; font-weight: 700; color: var(--danger); }
+@media (max-width: 560px) { .soon-alert { top: auto; bottom: 16px; inset-inline: 16px; width: auto; } }
 .lbl { font-size: 13px; font-weight: 700; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 16px; font-weight: 700; cursor: pointer; color: var(--muted); transition: transform 0.25s var(--ease), border-color 0.2s, background 0.2s, color 0.2s; }
@@ -552,6 +584,15 @@ button, a, input, summary, select { touch-action: manipulation; }
 </div>
 </div>
 <div id="toast" role="status" hidden></div>
+<section class="soon-alert" id="soon-alert" role="alert" aria-labelledby="soon-title" hidden>
+  <div class="soon-head">
+    <span class="soon-bell" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+    <b id="soon-title"></b>
+    <button class="soon-close" type="button" id="soon-close">&times;</button>
+  </div>
+  <small data-i18n="soonHint">Tap a task to jump to it.</small>
+  <ul class="soon-list" id="soon-list"></ul>
+</section>
 </template>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -634,6 +675,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       restoreBtn: "Restore tasks…", restoreBad: "That file is not a Task Board backup.", restoreYes: "Replace tasks",
       restoreAsk: "Replace the current {a} tasks with the {b} tasks from the backup of {d}?",
       meSigned: "Signed in as",
+      soonOne: "1 task is due soon and not done yet", soonMany: "{n} tasks are due soon and not done yet", soonHint: "Tap a task to jump to it.", soonTag: "Due soon", soonCloseLbl: "Dismiss",
       pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Manager", roleSuper: "Super admin", profileLbl: "Your profile"
     },
     ar: {
@@ -706,6 +748,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       restoreBtn: "استعادة المهام…", restoreBad: "هذا الملف ليس نسخة احتياطية للوحة المهام.", restoreYes: "استبدال المهام",
       restoreAsk: "استبدال المهام الحالية ({a}) بالمهام من النسخة الاحتياطية ({b}) بتاريخ {d}؟", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
       meSigned: "تم الدخول باسم",
+      soonOne: "مهمة واحدة موعدها قريب ولم تُنجز بعد", soonMany: "{n} مهام موعدها قريب ولم تُنجز بعد", soonHint: "اضغط على مهمة للانتقال إليها.", soonTag: "موعدها قريب", soonCloseLbl: "إغلاق",
       pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مدير", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
     }
   };
@@ -857,6 +900,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
     document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
     $("#search").setAttribute("aria-label", t("search"));
+    $("#soon-close").setAttribute("aria-label", t("soonCloseLbl"));
     $("#summary").setAttribute("aria-label", t("summaryLabel"));
     $(".tabs").setAttribute("aria-label", t("tabsLabel"));
     $("#lang-btn").textContent = S.lang === "ar" ? "English" : "العربية";
@@ -909,6 +953,9 @@ button, a, input, summary, select { touch-action: manipulation; }
 
   /* ---- state helpers ---- */
   function isDone(k) { return !S.admin && !!DONE[k.id]; }
+  /* due within the next 2 days, or already overdue, and not ticked */
+  var SOON_MS = 2 * 24 * 3600 * 1000;
+  function isSoon(k) { return !isDone(k) && isLive(k) && dueMoment(k) - new Date() <= SOON_MS; }
   /* a scheduled task stays hidden from staff until its post date arrives */
   function postMoment(k) {
     var d = parseDay(k.postOn), tm = /^(\d\d):(\d\d)$/.exec(k.postTime || "");
@@ -1096,7 +1143,7 @@ button, a, input, summary, select { touch-action: manipulation; }
   /* ---- rendering ---- */
   function taskRow(k, index, animate) {
     var done = isDone(k), dl = dueLabel(k), b = bucket(k), links = linksOf(k);
-    var li = h("li", { class: "task" + (done ? " is-done" : "") + (!done && b === "overdue" ? " late" : "") + (animate ? " enter" : "") });
+    var li = h("li", { class: "task" + (done ? " is-done" : "") + (!done && b === "overdue" ? " late" : "") + (isSoon(k) ? " soon" : "") + (animate ? " enter" : ""), "data-tid": k.id });
     if (animate) li.style.setProperty("--i", String(Math.min(index, 10)));
 
     if (!S.admin) {
@@ -1114,6 +1161,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     if (k.example) title.appendChild(h("span", { class: "tag", text: t("example") }));
     if (!isLive(k)) title.appendChild(h("span", { class: "tag sched", text: t("scheduled") }));
     if (isNew(k)) title.appendChild(h("span", { class: "tag new", text: t("newTag") }));
+    if (isSoon(k) && b !== "overdue") title.appendChild(h("span", { class: "tag soon-tag", text: t("soonTag") }));
     body.appendChild(title);
     if (k.details) body.appendChild(h("p", { class: "details" }, h("bdi", { text: k.details })));
 
@@ -1290,6 +1338,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     }
     board.appendChild(wrap);
     all.forEach(function (k) { S.seen[k.id] = 1; });
+    renderSoon(all);
     fillNames();
   }
 
@@ -1520,6 +1569,37 @@ button, a, input, summary, select { touch-action: manipulation; }
       if (c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment") { fb.auth.signInWithRedirect(p); return; }
       if (c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request") toast(t("signFail"));
     });
+  });
+
+  /* ---- "due soon" notification: slides in once each time the board is opened ---- */
+  var soonShown = false, soonClosed = false;
+  function renderSoon(all) {
+    var box = $("#soon-alert");
+    if (S.admin || !S.allowed || !S.loaded || soonClosed) { box.hidden = true; return; }
+    var list = all.filter(isSoon).sort(function (a, b) { return dueMoment(a) - dueMoment(b); });
+    if (!list.length) { box.hidden = true; return; }
+    $("#soon-title").textContent = list.length === 1 ? t("soonOne") : t("soonMany", { n: list.length });
+    var ul = $("#soon-list"); ul.textContent = "";
+    list.slice(0, 6).forEach(function (k) {
+      var dl = dueLabel(k);
+      ul.appendChild(h("li", null, h("button", { type: "button", onclick: function () { jumpTo(k.id); } },
+        h("span", { class: "st" }, h("bdi", { text: k.title || t("untitled") })), h("span", { class: "sd", text: dl.main }))));
+    });
+    if (!soonShown) { soonShown = true; box.hidden = false; }
+  }
+  function jumpTo(id) {
+    var li = Array.prototype.filter.call(document.querySelectorAll(".task"), function (x) { return x.getAttribute("data-tid") === id; })[0];
+    if (!li) return;
+    li.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "center" });
+    li.classList.remove("flash"); void li.offsetWidth; li.classList.add("flash");
+    setTimeout(function () { li.classList.remove("flash"); }, 1700);
+  }
+  $("#soon-close").addEventListener("click", function () {
+    soonClosed = true;
+    var box = $("#soon-alert");
+    if (calm) { box.hidden = true; return; }
+    box.classList.add("leaving");
+    setTimeout(function () { box.hidden = true; box.classList.remove("leaving"); }, 300);
   });
 
   /* ---- profile button in the header: Google photo or initials, name, and a small menu ---- */
