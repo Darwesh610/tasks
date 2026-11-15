@@ -214,6 +214,13 @@ body.gated .wrap > :not(#gate), body.gated #new-btn, body.gated #admin-badge { d
 .teacher-list .t-id small { color: var(--muted); direction: ltr; text-align: start; overflow-wrap: anywhere; }
 .teacher-list .chip { padding: 4px 12px; font-size: 13px; }
 .super-mode #teachers-panel { display: none !important; }
+.teacher-list .t-tag { align-self: flex-start; margin-top: 4px; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.roster-form { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
+.roster-form label { font-size: 13px; font-weight: 700; }
+.roster-form textarea { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); min-height: 70px; resize: vertical; }
+.roster-form textarea:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+.roster-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.restore-row span { color: var(--danger); font-weight: 600; }
 .super-mode #summary, .super-mode .toolbar, .super-mode #board, .super-mode #progress, .super-mode #notice, .super-mode #form-panel, .super-mode #new-btn { display: none !important; }
 .name-card .form-error { flex-basis: 100%; }
 .name-card .form-error:empty { display: none; }
@@ -439,6 +446,18 @@ button, a, input, summary, select { touch-action: manipulation; }
     <div class="link-row"><b data-i18n="linkStaff">Staff link</b><code id="url-staff"></code><button class="btn small" type="button" data-copy="url-staff" data-i18n="copy">Copy</button></div>
     <div class="link-row"><b data-i18n="linkAdmin">Admin link</b><code id="url-admin"></code><button class="btn small" type="button" data-copy="url-admin" data-i18n="copy">Copy</button></div>
     <div class="link-row" id="super-link-row" hidden><b data-i18n="linkSuper">Super admin link</b><code id="url-super"></code><button class="btn small" type="button" data-copy="url-super" data-i18n="copy">Copy</button></div>
+    <div class="link-row" id="backup-row" hidden>
+      <b data-i18n="backupLbl">Backup</b>
+      <span data-i18n="backupHint">Save a copy of all tasks and teachers to this computer.</span>
+      <button class="btn small" type="button" id="backup-btn" data-i18n="backupBtn">Download backup</button>
+      <button class="btn small quiet" type="button" id="restore-btn" data-i18n="restoreBtn">Restore tasks…</button>
+      <input type="file" id="f-restore" accept="application/json,.json" hidden>
+    </div>
+    <div class="link-row restore-row" id="restore-row" hidden>
+      <span id="restore-text"></span>
+      <button class="btn small danger" type="button" id="restore-yes" data-i18n="restoreYes">Replace tasks</button>
+      <button class="btn small" type="button" id="restore-no" data-i18n="cancel">Cancel</button>
+    </div>
     <div class="link-row" id="signout-row" hidden>
       <span id="signed-text"></span>
       <button class="btn small" type="button" id="signout-btn" data-i18n="signOut">Sign out</button>
@@ -448,6 +467,11 @@ button, a, input, summary, select { touch-action: manipulation; }
   <details class="panel teachers" id="teachers-panel" hidden>
     <summary><span data-i18n="teachersTitle">Teachers</span> <span class="count" id="teachers-count"></span></summary>
     <p class="teachers-hint" data-i18n="teachersHint"></p>
+    <form class="roster-form" id="roster-form" novalidate>
+      <label for="f-roster" data-i18n="rosterLbl">Add teachers: one per line, with name, school email and key stages</label>
+      <textarea id="f-roster" rows="3" dir="auto" data-i18n-ph="rosterPh"></textarea>
+      <div class="roster-actions"><button class="btn small primary" type="submit" data-i18n="rosterAdd">Add to the list</button><span class="form-error" id="roster-error" role="alert"></span></div>
+    </form>
     <ul class="teacher-list" id="teacher-list"></ul>
   </details>
 
@@ -562,7 +586,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       adminBadge: "Admin", linksTitle: "Links to share", adminIntro: "This is the admin view. Tasks you add, edit or delete here update the board for everyone straight away.",
       linkStaff: "Staff link", linkAdmin: "Admin link", copy: "Copy", copied: "Copied", saving: "Saving…",
       readOnly: "Sign in below with your school Google account to add or change tasks.",
-      needLogin: "Sign in with the admin password first.", saved: "Saved", pwLabel: "Admin password", signIn: "Sign in", signOut: "Sign out",
+      needLogin: "Only admins can save changes. Sign in with an admin account.", saved: "Saved", pwLabel: "Admin password", signIn: "Sign in", signOut: "Sign out",
       signedIn: "You are signed in as admin on this device.", badPw: "That password is not right.",
       deadSetup: "The board is not connected to its database yet. Fill in config.js (see SETUP.md).",
       errTooBig: "The board is too large to save. Delete some old tasks first.",
@@ -573,7 +597,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       nameIs: "Your ticks are shared with managers as", nameChange: "Change name",
       nameNeed: "Add your name at the top so managers can see what you finished.",
       syncErr: "Your tick is saved on this device but has not reached the managers yet. Check your connection.",
-      whoDone: "Assigned to {n} · {d} done", whoNone: "No teachers in this key stage have signed in yet.",
+      whoDone: "Assigned to {n} · {d} done", whoNone: "No teachers in this key stage yet. Add them in the Teachers list.",
       whoYes: "Done", whoNo: "Not done yet", waRemindNot: "Remind those not done", waStill: "Still to do",
       signInLbl: "Sign in", gSignIn: "Sign in with Google", pwAlt: "Use the shared password",
       signedAs: "Signed in as {e}", superTag: "super admin", notAdmin: "{e} is not an admin. Ask the super admin to add this email, or sign out and use another account.",
@@ -588,7 +612,13 @@ button, a, input, summary, select { touch-action: manipulation; }
       wrongAcct: "{e} is not an Emeralds school account. Sign in with your {d} email.",
       ksHello: "Welcome, {n}", ksHint: "Choose carefully: once saved, only a manager can change them. You will see tasks for your key stage(s) and for all staff.",
       myLocked: "Your key stages are set. Ask a manager if they need changing.",
-      teachersTitle: "Teachers", teachersHint: "The key stages each teacher chose. Teachers cannot change them after choosing; tap a key stage here to fix a mistake.", noTeachers: "No teachers have signed in yet.",
+      teachersTitle: "Teachers", teachersHint: "Everyone on the staff list or who has signed in. Teachers cannot change their key stages after choosing; tap a key stage here to fix a mistake.", noTeachers: "No teachers yet. Add them below.",
+      rosterLbl: "Add teachers: one per line, with name, school email and key stages", rosterPh: "Sara Ahmed, sara.ahmed@emeralds-internationaledu.com, KS1 KS2",
+      rosterAdd: "Add to the list", rosterBad: "Line {n} has no email address.", rosterEmpty: "Type at least one teacher.", rosterMany: "Add at most 300 teachers at a time.",
+      rosterDone: "Added {n} to the staff list.", notSigned: "Not signed in yet", removeT: "Remove", removeTConfirm: "Tap again to remove",
+      backupLbl: "Backup", backupHint: "Save a copy of all tasks and teachers to this computer.", backupBtn: "Download backup", backupDone: "Backup downloaded.",
+      restoreBtn: "Restore tasks…", restoreBad: "That file is not a Task Board backup.", restoreYes: "Replace tasks",
+      restoreAsk: "Replace the current {a} tasks with the {b} tasks from the backup of {d}?",
       meSigned: "Signed in as",
       pmKS: "Key stages", pmNoKS: "Not chosen yet", roleTeacher: "Teacher", roleAdmin: "Admin", roleSuper: "Super admin", profileLbl: "Your profile"
     },
@@ -627,7 +657,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       adminBadge: "المشرف", linksTitle: "روابط للمشاركة", adminIntro: "هذه واجهة المشرف. المهام التي تضيفها أو تعدّلها أو تحذفها هنا تُحدَّث على اللوحة للجميع.",
       linkStaff: "رابط الموظفين", linkAdmin: "رابط المشرف", copy: "نسخ", copied: "تم النسخ", saving: "جارٍ الحفظ…",
       readOnly: "سجّل الدخول بالأسفل بحساب Google المدرسي لإضافة المهام أو تعديلها.",
-      needLogin: "سجّل الدخول بكلمة مرور المشرف أولًا.", saved: "تم الحفظ", pwLabel: "كلمة مرور المشرف", signIn: "دخول", signOut: "خروج",
+      needLogin: "يمكن للمشرفين فقط حفظ التغييرات. سجّل الدخول بحساب مشرف.", saved: "تم الحفظ", pwLabel: "كلمة مرور المشرف", signIn: "دخول", signOut: "خروج",
       signedIn: "أنت مسجّل كمشرف على هذا الجهاز.", badPw: "كلمة المرور غير صحيحة.",
       deadSetup: "اللوحة غير متصلة بقاعدة البيانات بعد. املأ ملف config.js (انظر SETUP.md).",
       errTooBig: "اللوحة أكبر من أن تُحفظ. احذف بعض المهام القديمة أولًا.",
@@ -638,7 +668,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       nameIs: "تظهر علاماتك للمديرين باسم", nameChange: "تغيير الاسم",
       nameNeed: "أضف اسمك في الأعلى ليرى المديرون ما أنجزته.",
       syncErr: "حُفظت علامتك على هذا الجهاز لكنها لم تصل إلى المديرين بعد. تحقق من الاتصال.",
-      whoDone: "مُسندة إلى {n} · أنجزها {d}", whoNone: "لم يسجّل أي معلم من هذه المرحلة الدخول بعد.",
+      whoDone: "مُسندة إلى {n} · أنجزها {d}", whoNone: "لا يوجد معلمون في هذه المرحلة بعد. أضفهم في قائمة المعلمين.",
       whoYes: "أنجزوها", whoNo: "لم ينجزوها بعد", waRemindNot: "تذكير من لم ينجز", waStill: "لم ينجزها بعد",
       signInLbl: "الدخول", gSignIn: "الدخول بحساب Google", pwAlt: "استخدام كلمة المرور المشتركة",
       signedAs: "تم الدخول باسم {e}", superTag: "المشرف العام", notAdmin: "{e} ليس مشرفًا. اطلب من المشرف العام إضافة هذا البريد، أو اخرج واستخدم حسابًا آخر.",
@@ -653,7 +683,13 @@ button, a, input, summary, select { touch-action: manipulation; }
       wrongAcct: "{e} ليس حسابًا مدرسيًا لإميرالدز. سجّل الدخول ببريدك {d}.",
       ksHello: "مرحبًا، {n}", ksHint: "اختر بعناية: بعد الحفظ لا يمكن تغييرها إلا من قِبل مدير. ستظهر لك مهام مرحلتك ومهام جميع الموظفين.",
       myLocked: "تم تحديد مراحلك الدراسية. اطلب من مدير تغييرها إن لزم.",
-      teachersTitle: "المعلمون", teachersHint: "المراحل التي اختارها كل معلم. لا يمكن للمعلمين تغييرها بعد الاختيار؛ اضغط على مرحلة هنا لتصحيح خطأ.", noTeachers: "لم يسجّل أي معلم الدخول بعد.", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
+      teachersTitle: "المعلمون", teachersHint: "كل من في قائمة الموظفين أو سجّل الدخول. لا يمكن للمعلمين تغيير مراحلهم بعد الاختيار؛ اضغط على مرحلة هنا لتصحيح خطأ.", noTeachers: "لا يوجد معلمون بعد. أضفهم بالأسفل.",
+      rosterLbl: "إضافة معلمين: معلم في كل سطر، مع الاسم والبريد المدرسي والمراحل", rosterPh: "سارة أحمد، sara.ahmed@emeralds-internationaledu.com، KS1 KS2",
+      rosterAdd: "إضافة إلى القائمة", rosterBad: "السطر {n} لا يحتوي على بريد إلكتروني.", rosterEmpty: "اكتب معلمًا واحدًا على الأقل.", rosterMany: "أضف 300 معلم كحد أقصى في المرة الواحدة.",
+      rosterDone: "تمت إضافة {n} إلى قائمة الموظفين.", notSigned: "لم يسجّل الدخول بعد", removeT: "إزالة", removeTConfirm: "اضغط مرة أخرى للإزالة",
+      backupLbl: "نسخة احتياطية", backupHint: "احفظ نسخة من كل المهام والمعلمين على هذا الجهاز.", backupBtn: "تنزيل نسخة احتياطية", backupDone: "تم تنزيل النسخة الاحتياطية.",
+      restoreBtn: "استعادة المهام…", restoreBad: "هذا الملف ليس نسخة احتياطية للوحة المهام.", restoreYes: "استبدال المهام",
+      restoreAsk: "استبدال المهام الحالية ({a}) بالمهام من النسخة الاحتياطية ({b}) بتاريخ {d}؟", ksHint: "اختر مرة واحدة. ستظهر لك مهام مرحلتك ومهام جميع الموظفين، ويرى المديرون المهام التي أنجزتها.",
       meSigned: "تم الدخول باسم",
       pmKS: "المراحل الدراسية", pmNoKS: "لم تُختر بعد", roleTeacher: "معلم", roleAdmin: "مشرف", roleSuper: "المشرف العام", profileLbl: "ملفك الشخصي"
     }
@@ -933,29 +969,52 @@ button, a, input, summary, select { touch-action: manipulation; }
         .catch(function () { toast(t("syncErr")); });
     }, 600);
   }
-  /* admin only: listen to everyone's names and ticks; the same name on two devices counts as one person */
+  /* admin only: everyone's records (people who signed in) plus the staff list admins typed in
+     (people who may not have signed in yet). One person per email address. */
+  var STAFF_DOCS = [], ROSTER_DOCS = [], rosterUnsub = null;
   function watchPeople(on) {
     if (peopleUnsub) { peopleUnsub(); peopleUnsub = null; }
-    PEOPLE = [];
+    if (rosterUnsub) { rosterUnsub(); rosterUnsub = null; }
+    STAFF_DOCS = []; ROSTER_DOCS = []; PEOPLE = [];
     if (!on || !fb) return;
     peopleUnsub = fb.db.collection("staff").onSnapshot(function (qs) {
-      var byName = {};
-      qs.forEach(function (d) {
-        var x = d.data() || {}, nm = String(x.name || "").replace(/\s+/g, " ").trim(), em = String(x.email || "").toLowerCase();
-        if (!em) return;
-        if (!nm) nm = em;
-        var key = em;
-        var p = byName[key] || (byName[key] = { name: niceName(nm), email: em, ids: [], groups: [], all: false, done: {} });
-        p.ids.push(d.id);
-        var g = onlyKS(x.groups);
-        if (!g.length) p.all = true;
-        g.forEach(function (y) { if (p.groups.indexOf(y) === -1) p.groups.push(y); });
-        Object.keys(x.done || {}).forEach(function (k) { p.done[k] = 1; });
-      });
-      PEOPLE = Object.keys(byName).map(function (k) { return byName[k]; })
-        .sort(function (a, b) { return a.name.localeCompare(b.name, locale()); });
-      render();
-    }, function () { PEOPLE = []; render(); });
+      var a = []; qs.forEach(function (d) { a.push({ id: d.id, x: d.data() || {} }); });
+      STAFF_DOCS = a; buildPeople();
+    }, function () { STAFF_DOCS = []; buildPeople(); });
+    rosterUnsub = fb.db.collection("roster").onSnapshot(function (qs) {
+      var a = []; qs.forEach(function (d) { a.push({ id: d.id, x: d.data() || {} }); });
+      ROSTER_DOCS = a; buildPeople();
+    }, function () { ROSTER_DOCS = []; buildPeople(); });
+  }
+  function buildPeople() {
+    var by = {};
+    function person(em, nm) {
+      return by[em] || (by[em] = { name: niceName(nm || em), email: em, ids: [], rosterId: "", groups: [], rosterGroups: [], done: {} });
+    }
+    ROSTER_DOCS.forEach(function (r) {
+      var em = String(r.x.email || r.id || "").toLowerCase();
+      if (!em) return;
+      var p = person(em, r.x.name);
+      p.rosterId = r.id; p.rosterGroups = onlyKS(r.x.groups);
+    });
+    STAFF_DOCS.forEach(function (d) {
+      var em = String(d.x.email || "").toLowerCase();
+      if (!em) return;
+      var p = person(em, d.x.name);
+      if (d.x.name) p.name = niceName(d.x.name);
+      p.ids.push(d.id);
+      onlyKS(d.x.groups).forEach(function (y) { if (p.groups.indexOf(y) === -1) p.groups.push(y); });
+      Object.keys(d.x.done || {}).forEach(function (k) { p.done[k] = 1; });
+    });
+    PEOPLE = Object.keys(by).map(function (k) {
+      var p = by[k];
+      p.signedIn = p.ids.length > 0;
+      /* key stages: what the teacher's own record says, or the staff list if they have not chosen yet */
+      if (!p.groups.length) p.groups = p.rosterGroups.slice();
+      p.groups = KS.filter(function (x) { return p.groups.indexOf(x) !== -1; });
+      return p;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name, locale()); });
+    render();
   }
   /* a task for all staff counts everyone; a key-stage task counts only teachers who chose that key stage */
   function forPerson(k, p) {
@@ -999,12 +1058,19 @@ button, a, input, summary, select { touch-action: manipulation; }
   function safeUrl(v) {
     try { var u = new URL(v); return (u.protocol === "https:" || u.protocol === "http:") ? u.href : null; } catch (e) { return null; }
   }
-  /* admin save: write the whole task list to the database; every open board updates live */
-  function saveTasks(next) {
+  /* admin save. "change" is a function from the task list to the new task list. It runs inside a
+     transaction on the latest list in the database, so two admins saving at once never undo
+     each other: if someone else saved first, the change is simply applied on top of theirs. */
+  function saveTasks(change) {
     if (S.busy) return;
     if (!fb || !fb.auth.currentUser || !roleOf()) { S.readOnly = true; render(); toast(t("needLogin")); return; }
     S.busy = true; toast(t("saving"));
-    fb.doc.set({ tasks: next, updatedAt: new Date().toISOString() }).then(function () {
+    fb.db.runTransaction(function (tx) {
+      return tx.get(fb.doc).then(function (snap) {
+        var latest = cleanTasks(snap.exists ? (snap.data() || {}).tasks : []);
+        tx.set(fb.doc, { tasks: change(latest), updatedAt: new Date().toISOString() });
+      });
+    }).then(function () {
       S.busy = false; toast(t("saved"));
     }, function (e) {
       S.busy = false;
@@ -1077,7 +1143,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       del.addEventListener("click", function () {
         if (del.dataset.armed) {
           li.classList.add("removing");
-          setTimeout(function () { saveTasks(S.tasks.filter(function (x) { return x.id !== k.id; })); }, calm ? 0 : 300);
+          setTimeout(function () { saveTasks(function (list) { return list.filter(function (x) { return x.id !== k.id; }); }); }, calm ? 0 : 300);
           return;
         }
         del.dataset.armed = "1"; del.textContent = t("delConfirm"); del.classList.remove("quiet"); del.classList.add("danger");
@@ -1119,6 +1185,9 @@ button, a, input, summary, select { touch-action: manipulation; }
     $("#signed-text").textContent = role ? t("signedAs", { e: S.user }) + (role === "super" ? " (" + t("superTag") + ")" : "") + "."
       : (S.adminsLoaded ? t("notAdmin", { e: S.user }) : t("signedAs", { e: S.user }) + ".");
     $("#super-link-row").hidden = !(S.admin && role === "super");
+    $("#backup-row").hidden = !(S.admin && !S.super && !S.readOnly);
+    $("#restore-row").hidden = !(S.restore && S.admin && !S.readOnly);
+    if (S.restore) $("#restore-text").textContent = t("restoreAsk", { a: S.tasks.length, b: S.restore.tasks.length, d: S.restore.savedAt });
     renderSuper(role);
     $(".tabs").hidden = S.admin;
     $("#me-row").hidden = S.admin;
@@ -1220,7 +1289,7 @@ button, a, input, summary, select { touch-action: manipulation; }
   }
 
   /* ---- super admin page (#super): only the super admin can add or remove admin emails ---- */
-  /* admin page: every teacher with the key stages they chose; tapping a key stage fixes a mistake */
+  /* admin page: every teacher with their key stages; tap a key stage to fix it, or remove the person */
   function renderTeachers() {
     var show = S.admin && !S.super && !S.readOnly && S.allowed;
     $("#teachers-panel").hidden = !show;
@@ -1237,15 +1306,100 @@ button, a, input, summary, select { touch-action: manipulation; }
           setTeacherGroups(p, next);
         } }, ks));
       });
-      ul.appendChild(h("li", null, h("div", { class: "t-id" }, h("b", null, h("bdi", { text: p.name })), h("small", { text: p.email })), chips));
+      var rm = h("button", { class: "btn small quiet", type: "button" }, t("removeT"));
+      rm.addEventListener("click", function () {
+        if (rm.dataset.armed) { removeTeacher(p); return; }
+        rm.dataset.armed = "1"; rm.textContent = t("removeTConfirm"); rm.classList.remove("quiet"); rm.classList.add("danger");
+        setTimeout(function () { delete rm.dataset.armed; rm.textContent = t("removeT"); rm.classList.remove("danger"); rm.classList.add("quiet"); }, 3500);
+      });
+      var id = h("div", { class: "t-id" }, h("b", null, h("bdi", { text: p.name })), h("small", { text: p.email }));
+      if (!p.signedIn) id.appendChild(h("span", { class: "t-tag", text: t("notSigned") }));
+      ul.appendChild(h("li", null, id, chips, rm));
     });
   }
   function setTeacherGroups(p, groups) {
     if (!fb || S.readOnly) return;
     toast(t("saving"));
-    Promise.all(p.ids.map(function (id) { return fb.db.collection("staff").doc(id).update({ groups: groups }); }))
-      .then(function () { toast(t("saved")); }, function () { toast(t("errSave")); });
+    var jobs = p.ids.map(function (id) { return fb.db.collection("staff").doc(id).update({ groups: groups }); });
+    if (p.rosterId) jobs.push(fb.db.collection("roster").doc(p.rosterId).update({ groups: groups, updatedAt: new Date().toISOString() }));
+    Promise.all(jobs).then(function () { toast(t("saved")); }, function () { toast(t("errSave")); });
   }
+  /* removes the person from the lists; if they sign in again later they appear again */
+  function removeTeacher(p) {
+    if (!fb || S.readOnly) return;
+    toast(t("saving"));
+    var jobs = p.ids.map(function (id) { return fb.db.collection("staff").doc(id).delete(); });
+    if (p.rosterId) jobs.push(fb.db.collection("roster").doc(p.rosterId).delete());
+    Promise.all(jobs).then(function () { toast(t("saved")); }, function () { toast(t("errSave")); });
+  }
+  /* staff list: one teacher per line, "name, email, key stages" in any order (pasting from a
+     spreadsheet works too). Anyone already on the list is updated. */
+  function parseRoster(text) {
+    var rows = [], bad = [];
+    text.split(/\r?\n/).forEach(function (line, i) {
+      if (!line.trim()) return;
+      var m = line.match(/[^\s,;<>]+@[^\s,;<>]+\.[^\s,;<>]+/);
+      if (!m) { bad.push(i + 1); return; }
+      var em = m[0].toLowerCase(), rest = line.replace(m[0], " ");
+      var groups = [];
+      rest.replace(/ks\s*([1-4])/gi, function (all, n) { if (groups.indexOf("KS" + n) === -1) groups.push("KS" + n); return ""; });
+      groups = KS.filter(function (x) { return groups.indexOf(x) !== -1; });
+      var nm = rest.replace(/ks\s*[1-4]/gi, " ").replace(/[,;\t<>،]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+      rows.push({ email: em, name: nm || em, groups: groups });
+    });
+    return { rows: rows, bad: bad };
+  }
+  $("#roster-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!fb || S.readOnly) return;
+    var err = $("#roster-error"), r = parseRoster($("#f-roster").value);
+    if (r.bad.length) { err.textContent = t("rosterBad", { n: r.bad.join(", ") }); return; }
+    if (!r.rows.length) { err.textContent = t("rosterEmpty"); return; }
+    if (r.rows.length > 300) { err.textContent = t("rosterMany"); return; }
+    err.textContent = "";
+    toast(t("saving"));
+    var batch = fb.db.batch(), now = new Date().toISOString();
+    r.rows.forEach(function (x) { batch.set(fb.db.collection("roster").doc(x.email), { name: x.name, email: x.email, groups: x.groups, updatedAt: now }); });
+    batch.commit().then(function () {
+      $("#f-roster").value = ""; toast(t("rosterDone", { n: r.rows.length }));
+    }, function () { toast(t("errSave")); });
+  });
+
+  /* ---- backup: download everything as a file; restore puts back the task list ---- */
+  function download(name, text) {
+    var a = h("a", { href: URL.createObjectURL(new Blob([text], { type: "application/json" })), download: name });
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  $("#backup-btn").addEventListener("click", function () {
+    if (!fb || S.readOnly) return;
+    toast(t("saving"));
+    function all(name) { return fb.db.collection(name).get().then(function (qs) { var o = {}; qs.forEach(function (d) { o[d.id] = d.data(); }); return o; }); }
+    Promise.all([fb.doc.get(), all("staff"), all("roster"), fb.db.doc("config/admins").get()]).then(function (r) {
+      var stamp = new Date().toISOString();
+      var data = { kind: "emeralds-task-board-backup", version: 1, savedAt: stamp,
+        tasks: cleanTasks(r[0].exists ? (r[0].data() || {}).tasks : []), staff: r[1], roster: r[2],
+        admins: r[3].exists ? cleanEmails((r[3].data() || {}).emails) : [] };
+      download("task-board-backup-" + stamp.slice(0, 10) + ".json", JSON.stringify(data, null, 2));
+      toast(t("backupDone"));
+    }, function () { toast(t("errSave")); });
+  });
+  $("#restore-btn").addEventListener("click", function () { $("#f-restore").click(); });
+  $("#f-restore").addEventListener("change", function () {
+    var f = this.files && this.files[0]; this.value = "";
+    if (!f) return;
+    f.text().then(function (txt) {
+      var d = JSON.parse(txt);
+      if (!d || d.kind !== "emeralds-task-board-backup" || !Array.isArray(d.tasks)) throw new Error("bad");
+      S.restore = { tasks: cleanTasks(d.tasks), savedAt: String(d.savedAt || "").slice(0, 10) };
+      render();
+    }).catch(function () { toast(t("restoreBad")); });
+  });
+  $("#restore-yes").addEventListener("click", function () {
+    var r = S.restore; S.restore = null; render();
+    if (r) saveTasks(function () { return r.tasks; });
+  });
+  $("#restore-no").addEventListener("click", function () { S.restore = null; render(); });
 
   function renderSuper(role) {
     $("#super-panel").hidden = !S.super;
@@ -1383,7 +1537,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     setTimeout(commit, 750);
   }
   function removeExamples() {
-    saveTasks(S.tasks.filter(function (k) { return !k.example; }));
+    saveTasks(function (list) { return list.filter(function (k) { return !k.example; }); });
   }
   function openForm(k, copy) {
     S.editing = k && !copy ? k.id : null;
@@ -1487,13 +1641,11 @@ button, a, input, summary, select { touch-action: manipulation; }
     var data = { postOn: postOn, postTime: postTime, title: title, link: "", links: links.slice(0, 8), repeat: $("#f-repeat").value, urgent: $("#f-urgent").getAttribute("aria-pressed") === "true", due: due, time: $("#f-time").value || "", groups: formGroups(), audience: "", details: $("#f-details").value.trim() };
     var editing = S.editing;
     closeForm();
-    var next;
-    if (editing) next = S.tasks.map(function (k) { return k.id === editing ? Object.assign({}, k, data) : k; });
-    else {
-      data.id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      next = S.tasks.concat([data]);
-    }
-    saveTasks(next);
+    if (!editing) data.id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    saveTasks(function (list) {
+      if (editing) return list.map(function (k) { return k.id === editing ? Object.assign({}, k, data) : k; });
+      return list.concat([data]);
+    });
   });
   document.querySelectorAll(".tabs button").forEach(function (b) {
     b.addEventListener("click", function () {
@@ -1582,8 +1734,17 @@ button, a, input, summary, select { touch-action: manipulation; }
         try { localStorage.setItem("my-groups", JSON.stringify(MINE)); } catch (e) {}
       }
       var wasFirst = first; first = false;
-      loadedMineFor = uid; S.animateAll = wasFirst; render();
-      if (wasFirst) syncMe();
+      function ready() { if (ME.uid !== uid) return; loadedMineFor = uid; S.animateAll = wasFirst; render(); if (wasFirst) syncMe(); }
+      if (wasFirst && !LOCKED.length && ME.email) {
+        /* not chosen yet: if the admins put this person on the staff list with key stages, use those */
+        fb.db.collection("roster").doc(ME.email).get().then(function (r) {
+          var g = r.exists ? onlyKS((r.data() || {}).groups) : [];
+          if (g.length && ME.uid === uid) {
+            LOCKED = g; MINE = g.slice();
+            try { localStorage.setItem("my-groups", JSON.stringify(MINE)); } catch (e) {}
+          }
+        }, function () {}).then(ready);
+      } else ready();
     }, function () { if (ME.uid === uid) { loadedMineFor = uid; render(); } });
   }
   $("#signout-btn").addEventListener("click", signOutAll);
