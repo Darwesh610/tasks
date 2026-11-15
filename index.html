@@ -232,6 +232,7 @@ body.gated .wrap > :not(#gate), body.gated #new-btn, body.gated #admin-badge { d
 .roster-form textarea:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
 .roster-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .restore-row span { color: var(--danger); font-weight: 600; }
+.teachers #backup-row { margin-top: 12px; }
 .super-mode #summary, .super-mode .toolbar, .super-mode #board, .super-mode #progress, .super-mode #notice, .super-mode #form-panel, .super-mode #new-btn { display: none !important; }
 .name-card .form-error { flex-basis: 100%; }
 .name-card .form-error:empty { display: none; }
@@ -457,18 +458,6 @@ button, a, input, summary, select { touch-action: manipulation; }
     <div class="link-row"><b data-i18n="linkStaff">Staff link</b><code id="url-staff"></code><button class="btn small" type="button" data-copy="url-staff" data-i18n="copy">Copy</button></div>
     <div class="link-row"><b data-i18n="linkAdmin">Admin link</b><code id="url-admin"></code><button class="btn small" type="button" data-copy="url-admin" data-i18n="copy">Copy</button></div>
     <div class="link-row" id="super-link-row" hidden><b data-i18n="linkSuper">Super admin link</b><code id="url-super"></code><button class="btn small" type="button" data-copy="url-super" data-i18n="copy">Copy</button></div>
-    <div class="link-row" id="backup-row" hidden>
-      <b data-i18n="backupLbl">Backup</b>
-      <span data-i18n="backupHint">Save a copy of all tasks and teachers to this computer.</span>
-      <button class="btn small" type="button" id="backup-btn" data-i18n="backupBtn">Download backup</button>
-      <button class="btn small quiet" type="button" id="restore-btn" data-i18n="restoreBtn">Restore tasks…</button>
-      <input type="file" id="f-restore" accept="application/json,.json" hidden>
-    </div>
-    <div class="link-row restore-row" id="restore-row" hidden>
-      <span id="restore-text"></span>
-      <button class="btn small danger" type="button" id="restore-yes" data-i18n="restoreYes">Replace tasks</button>
-      <button class="btn small" type="button" id="restore-no" data-i18n="cancel">Cancel</button>
-    </div>
     <div class="link-row" id="signout-row" hidden>
       <span id="signed-text"></span>
       <button class="btn small" type="button" id="signout-btn" data-i18n="signOut">Sign out</button>
@@ -484,6 +473,18 @@ button, a, input, summary, select { touch-action: manipulation; }
       <div class="roster-actions"><button class="btn small primary" type="submit" data-i18n="rosterAdd">Add to the list</button><span class="form-error" id="roster-error" role="alert"></span></div>
     </form>
     <ul class="teacher-list" id="teacher-list"></ul>
+    <div class="link-row" id="backup-row" hidden>
+      <b data-i18n="backupLbl">Backup</b>
+      <span data-i18n="backupHint">Save a copy of all tasks and teachers to this computer.</span>
+      <button class="btn small" type="button" id="backup-btn" data-i18n="backupBtn">Download backup</button>
+      <button class="btn small quiet" type="button" id="restore-btn" data-i18n="restoreBtn">Restore tasks…</button>
+      <input type="file" id="f-restore" accept="application/json,.json" hidden>
+    </div>
+    <div class="link-row restore-row" id="restore-row" hidden>
+      <span id="restore-text"></span>
+      <button class="btn small danger" type="button" id="restore-yes" data-i18n="restoreYes">Replace tasks</button>
+      <button class="btn small" type="button" id="restore-no" data-i18n="cancel">Cancel</button>
+    </div>
   </details>
 
   <section class="panel" id="super-panel" hidden>
@@ -612,7 +613,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       whoDone: "Assigned to {n} · {d} done", whoNone: "No teachers in this key stage yet. Add them in the Teachers list.",
       whoYes: "Done", whoNo: "Not done yet", waRemindNot: "Remind those not done", waStill: "Still to do",
       signInLbl: "Sign in", gSignIn: "Sign in with Google", pwAlt: "Use the shared password",
-      signedAs: "Signed in as {e}", superTag: "super admin", notAdmin: "{e} is not an admin. Ask the super admin to add this email, or sign out and use another account.",
+      signedAs: "Signed in as {e}", superTag: "super admin", notAdmin: "{e} is not a manager. Ask the super admin to make you a manager, or sign out and use another account.",
       signFail: "Sign-in didn't finish. Try again.", linkSuper: "Super admin link",
       superTitle: "Super admin: roles",
       superIntro: "Everyone who has signed in or is on the staff list. Choose Manager to let someone post and edit tasks; Teacher to take that away. To make someone a manager before they sign in, add their school email below.",
@@ -684,7 +685,7 @@ button, a, input, summary, select { touch-action: manipulation; }
       whoDone: "مُسندة إلى {n} · أنجزها {d}", whoNone: "لا يوجد معلمون في هذه المرحلة بعد. أضفهم في قائمة المعلمين.",
       whoYes: "أنجزوها", whoNo: "لم ينجزوها بعد", waRemindNot: "تذكير من لم ينجز", waStill: "لم ينجزها بعد",
       signInLbl: "الدخول", gSignIn: "الدخول بحساب Google", pwAlt: "استخدام كلمة المرور المشتركة",
-      signedAs: "تم الدخول باسم {e}", superTag: "المشرف العام", notAdmin: "{e} ليس مشرفًا. اطلب من المشرف العام إضافة هذا البريد، أو اخرج واستخدم حسابًا آخر.",
+      signedAs: "تم الدخول باسم {e}", superTag: "المشرف العام", notAdmin: "{e} ليس مديرًا. اطلب من المشرف العام جعلك مديرًا، أو اخرج واستخدم حسابًا آخر.",
       signFail: "لم يكتمل تسجيل الدخول. حاول مرة أخرى.", linkSuper: "رابط المشرف العام",
       superTitle: "المشرف العام: الأدوار",
       superIntro: "كل من سجّل الدخول أو موجود في قائمة الموظفين. اختر «مدير» ليتمكن الشخص من نشر المهام وتعديلها، أو «معلم» لإلغاء ذلك. لجعل شخص مديرًا قبل أن يسجّل الدخول، أضف بريده المدرسي بالأسفل.",
@@ -1187,7 +1188,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     var canEdit = S.admin && !S.readOnly;
     $("#new-btn").hidden = !canEdit;
     $("#admin-badge").hidden = !S.admin;
-    $("#admin-panel").hidden = !S.admin;
+    $("#admin-panel").hidden = true;
     var role = roleOf(), signed = !!S.user;
     var gated = S.dead !== "deadSetup" && !S.allowed;
     document.body.classList.toggle("gated", gated);
@@ -1236,6 +1237,7 @@ button, a, input, summary, select { touch-action: manipulation; }
     var showNotice = true;
     if (S.dead) notice.textContent = t(S.dead);
     else if (S.admin && S.readOnly && !S.user) notice.textContent = t("readOnly");
+    else if (S.admin && S.readOnly && S.allowed && S.adminsLoaded) notice.textContent = t("notAdmin", { e: S.user });
     else if (!S.admin && !storeOK) notice.textContent = t("noStore");
     else if (canEdit && S.tasks.some(function (k) { return k.example; })) {
       notice.appendChild(h("span", { text: t("exNote") }));
